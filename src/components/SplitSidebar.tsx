@@ -1,4 +1,4 @@
-import { X, Copy } from 'lucide-react'
+import { X, Copy, Pencil } from 'lucide-react'
 import { Split } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -78,6 +78,9 @@ function SidebarTab({
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
       <div className="flex items-center gap-2 px-3 py-2.5 min-w-0">
+        {badge && (
+          <Pencil size={11} className={cn('flex-shrink-0 transition-colors', isActive ? 'text-violet-400/70' : 'text-white/25')} />
+        )}
         <div className="flex-1 min-w-0">
           <p className={cn(
             'text-xs truncate transition-colors leading-snug',
