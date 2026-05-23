@@ -1,4 +1,4 @@
-import { Plus, X, Copy } from 'lucide-react'
+import { X, Copy } from 'lucide-react'
 import { Split } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -9,7 +9,6 @@ interface SplitSidebarProps {
   onSelectTab: (id: 'builder' | string) => void
   onDeleteSplit: (id: string) => void
   onDuplicateSplit: (split: Split) => void
-  onNewSplit: () => void
 }
 
 export default function SplitSidebar({
@@ -19,7 +18,6 @@ export default function SplitSidebar({
   onSelectTab,
   onDeleteSplit,
   onDuplicateSplit,
-  onNewSplit,
 }: SplitSidebarProps) {
   return (
     <div
@@ -49,15 +47,6 @@ export default function SplitSidebar({
         ))}
       </nav>
 
-      <div className="px-2 py-2.5 border-t border-white/[0.05] flex-shrink-0">
-        <button
-          onClick={onNewSplit}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
-        >
-          <Plus size={12} />
-          New split
-        </button>
-      </div>
     </div>
   )
 }

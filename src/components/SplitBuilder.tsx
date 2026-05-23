@@ -280,7 +280,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
               onSelectTab={handleSelectTab}
               onDeleteSplit={handleDeleteSaved}
               onDuplicateSplit={handleDuplicateSaved}
-              onNewSplit={handleNewSplit}
             />
           </div>
 
