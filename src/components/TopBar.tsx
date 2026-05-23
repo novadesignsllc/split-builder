@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface TopBarProps {
   split: Split
+  isNamed: boolean
   onUpdateName: (name: string) => void
   onUpdateCycleDays: (days: number) => void
   onUpdateStartDay: (day: number) => void
@@ -14,6 +15,7 @@ interface TopBarProps {
 
 export default function TopBar({
   split,
+  isNamed,
   onUpdateName,
   onUpdateCycleDays,
   onUpdateStartDay,
@@ -72,32 +74,33 @@ export default function TopBar({
         </span>
       </div>
 
-      <div className="w-px h-4 bg-white/[0.07] flex-shrink-0" />
-
-      {/* Split name */}
-      <div className="flex-1 min-w-0 max-w-xs">
-        {isEditingName ? (
-          <input
-            autoFocus
-            type="text"
-            value={nameDraft}
-            onChange={e => setNameDraft(e.target.value)}
-            onBlur={commitName}
-            onKeyDown={handleNameKeyDown}
-            className="w-full text-sm text-white/90 bg-white/[0.05] border border-violet-500/30 rounded-lg px-2.5 py-1 outline-none focus:border-violet-400/50 focus:bg-white/[0.06]"
-          />
-        ) : (
-          <button
-            onClick={() => { setNameDraft(split.name); setIsEditingName(true) }}
-            className="text-left text-sm text-white/70 hover:text-white/90 truncate max-w-full rounded-lg px-2 py-1 hover:bg-white/[0.04] transition-colors"
-            title="Click to rename"
-          >
-            {split.name}
-          </button>
-        )}
-      </div>
-
-      <div className="w-px h-4 bg-white/[0.07] flex-shrink-0" />
+      {isNamed && (
+        <>
+          <div className="w-px h-4 bg-white/[0.07] flex-shrink-0" />
+          <div className="flex-1 min-w-0 max-w-xs">
+            {isEditingName ? (
+              <input
+                autoFocus
+                type="text"
+                value={nameDraft}
+                onChange={e => setNameDraft(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={handleNameKeyDown}
+                className="w-full text-sm text-white/90 bg-white/[0.05] border border-violet-500/30 rounded-lg px-2.5 py-1 outline-none focus:border-violet-400/50 focus:bg-white/[0.06]"
+              />
+            ) : (
+              <button
+                onClick={() => { setNameDraft(split.name); setIsEditingName(true) }}
+                className="text-left text-sm text-white/70 hover:text-white/90 truncate max-w-full rounded-lg px-2 py-1 hover:bg-white/[0.04] transition-colors"
+                title="Click to rename"
+              >
+                {split.name}
+              </button>
+            )}
+          </div>
+          <div className="w-px h-4 bg-white/[0.07] flex-shrink-0" />
+        </>
+      )}
 
       {/* Cycle length stepper */}
       <div className="flex items-center gap-1.5 flex-shrink-0">

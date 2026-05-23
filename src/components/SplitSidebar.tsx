@@ -28,7 +28,6 @@ export default function SplitSidebar({
     >
       <nav className="flex-1 overflow-y-auto py-3 no-scrollbar">
         <SidebarTab
-          label={builderSplitName || 'New Split'}
           badge="Builder"
           isActive={activeTabId === 'builder'}
           onClick={() => onSelectTab('builder')}
@@ -71,7 +70,7 @@ function SidebarTab({
   onDelete,
   onDuplicate,
 }: {
-  label: string
+  label?: string
   badge?: string
   isActive: boolean
   onClick: () => void
@@ -94,12 +93,14 @@ function SidebarTab({
           {badge && (
             <p className="text-[9px] text-white/20 uppercase tracking-widest leading-none mb-0.5">{badge}</p>
           )}
-          <p className={cn(
-            'text-xs truncate transition-colors leading-snug',
-            isActive ? 'text-white/85 font-medium' : 'text-white/40'
-          )}>
-            {label}
-          </p>
+          {label && (
+            <p className={cn(
+              'text-xs truncate transition-colors leading-snug',
+              isActive ? 'text-white/85 font-medium' : 'text-white/40'
+            )}>
+              {label}
+            </p>
+          )}
         </div>
         {(onDelete || onDuplicate) && (
           <div className="flex gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -259,6 +259,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
 
         <TopBar
           split={split}
+          isNamed={activeTabId !== 'builder'}
           onUpdateName={handleUpdateName}
           onUpdateCycleDays={handleUpdateCycleDays}
           onUpdateStartDay={handleUpdateStartDay}
