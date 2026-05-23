@@ -57,7 +57,7 @@ export default function DayCard({
       className={cn(
         'flex flex-col rounded-2xl transition-all min-w-0 relative overflow-hidden',
         day.isRest ? 'opacity-30' : '',
-        showHighlight ? 'border border-violet-500/25' : 'border border-white/[0.05]'
+        showHighlight ? 'border border-violet-500/25' : 'border-0'
       )}
       style={{
         background: showHighlight
@@ -107,8 +107,6 @@ export default function DayCard({
         </div>
       </div>
 
-      <div className="h-px bg-white/[0.04] mx-2 flex-shrink-0" />
-
       {/* Drop zone */}
       <div
         ref={setNodeRef}
@@ -118,13 +116,9 @@ export default function DayCard({
       >
         {day.muscleGroups.length === 0 && !day.isRest && (
           <div className={cn(
-            'flex-1 flex items-center justify-center rounded-xl border border-dashed min-h-[60px] transition-all',
-            showHighlight ? 'border-violet-400/30' : 'border-white/[0.05]'
-          )}>
-            <p className={cn('text-[11px] text-center px-2 transition-colors', showHighlight ? 'text-violet-300/60' : 'text-white/15')}>
-              {showHighlight ? 'drop here' : 'drop muscle group'}
-            </p>
-          </div>
+            'flex-1 rounded-xl border border-dashed min-h-[60px] transition-all',
+            showHighlight ? 'border-violet-400/30' : 'border-transparent'
+          )} />
         )}
 
         {day.muscleGroups.length === 0 && day.isRest && (
@@ -145,9 +139,7 @@ export default function DayCard({
         ))}
 
         {day.muscleGroups.length > 0 && !day.isRest && showHighlight && (
-          <div className="h-7 flex items-center justify-center rounded-xl border border-dashed border-violet-400/25">
-            <p className="text-[11px] text-violet-300/50">drop here</p>
-          </div>
+          <div className="h-7 rounded-xl border border-dashed border-violet-400/25" />
         )}
       </div>
     </div>
