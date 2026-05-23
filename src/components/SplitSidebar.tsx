@@ -79,17 +79,12 @@ function SidebarTab({
       )}
       <div className="flex items-center gap-2 px-3 py-2.5 min-w-0">
         <div className="flex-1 min-w-0">
-          {badge && (
-            <p className="text-[9px] text-white/20 uppercase tracking-widest leading-none mb-0.5">{badge}</p>
-          )}
-          {label && (
-            <p className={cn(
-              'text-xs truncate transition-colors leading-snug',
-              isActive ? 'text-white/85 font-medium' : 'text-white/40'
-            )}>
-              {label}
-            </p>
-          )}
+          <p className={cn(
+            'text-xs truncate transition-colors leading-snug',
+            isActive ? 'text-white font-medium' : 'text-white/60'
+          )}>
+            {label ?? badge}
+          </p>
         </div>
         {(onDelete || onDuplicate) && (
           <div className="flex gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
