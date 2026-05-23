@@ -271,7 +271,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           {/* Left sidebar */}
           <div className={cn(
             'flex-shrink-0 overflow-hidden transition-[width] duration-200',
-            sidebarOpen ? 'w-52' : 'w-0'
+            sidebarOpen ? 'w-52 border-r border-white/10' : 'w-0'
           )}>
             <SplitSidebar
               savedSplits={savedSplits}

@@ -21,7 +21,7 @@ export default function SplitSidebar({
 }: SplitSidebarProps) {
   return (
     <div
-      className="flex flex-col h-full border-r border-white/[0.05] w-52"
+      className="flex flex-col h-full w-52"
       style={{ background: 'rgba(0,0,0,0.45)' }}
     >
       <nav className="flex-1 overflow-y-auto py-3 no-scrollbar">
