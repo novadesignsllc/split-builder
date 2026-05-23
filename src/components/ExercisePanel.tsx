@@ -27,7 +27,6 @@ import {
 import { MuscleGroupDay, ExerciseEntry, PlannedSet, Exercise } from '@/lib/types'
 import { MUSCLE_TO_DB_MUSCLES, MUSCLE_COLORS, EQUIPMENT_OPTIONS } from '@/lib/constants'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import SetRow from '@/components/SetRow'
 import { cn } from '@/lib/utils'
 
@@ -197,7 +196,6 @@ export default function ExercisePanel({
       return matchesMuscle && matchesSearch && matchesEquipment && !plannedIds.has(ex.id)
     })
     .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(0, 12)
 
   function addExercise(exercise: Exercise) {
     const newEntry: ExerciseEntry = {
@@ -310,41 +308,37 @@ export default function ExercisePanel({
       </div>
 
       {filteredExercises.length > 0 && (
-        <div className="px-3 pb-2">
-          <ScrollArea className="max-h-36">
-            <div className="space-y-0.5">
-              {filteredExercises.map(ex => (
-                <div
-                  key={ex.id}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] group"
-                >
-                  <span className="flex-1 min-w-0 text-xs text-slate-400 truncate">
-                    {ex.name}
-                  </span>
-                  {ex.mechanic && (
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'text-[10px] h-4 px-1.5 flex-shrink-0',
-                        ex.mechanic === 'compound'
-                          ? 'border-violet-500/30 text-violet-400 bg-violet-950/40'
-                          : 'border-white/[0.08] text-slate-500'
-                      )}
-                    >
-                      {ex.mechanic}
-                    </Badge>
+        <div className="px-3 pb-2 space-y-0.5">
+          {filteredExercises.map(ex => (
+            <div
+              key={ex.id}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] group"
+            >
+              <span className="flex-1 min-w-0 text-xs text-slate-400 truncate">
+                {ex.name}
+              </span>
+              {ex.mechanic && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-[10px] h-4 px-1.5 flex-shrink-0',
+                    ex.mechanic === 'compound'
+                      ? 'border-violet-500/30 text-violet-400 bg-violet-950/40'
+                      : 'border-white/[0.08] text-slate-500'
                   )}
-                  <button
-                    onClick={() => addExercise(ex)}
-                    className="flex-shrink-0 w-5 h-5 rounded-md bg-violet-600/20 text-violet-400 hover:bg-violet-600/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label={`Add ${ex.name}`}
-                  >
-                    <Plus size={11} />
-                  </button>
-                </div>
-              ))}
+                >
+                  {ex.mechanic}
+                </Badge>
+              )}
+              <button
+                onClick={() => addExercise(ex)}
+                className="flex-shrink-0 w-5 h-5 rounded-md bg-violet-600/20 text-violet-400 hover:bg-violet-600/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label={`Add ${ex.name}`}
+              >
+                <Plus size={11} />
+              </button>
             </div>
-          </ScrollArea>
+          ))}
         </div>
       )}
 
