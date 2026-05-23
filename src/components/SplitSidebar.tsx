@@ -14,7 +14,6 @@ interface SplitSidebarProps {
 export default function SplitSidebar({
   savedSplits,
   activeTabId,
-  builderSplitName,
   onSelectTab,
   onDeleteSplit,
   onDuplicateSplit,
@@ -25,42 +24,47 @@ export default function SplitSidebar({
       style={{ background: 'rgba(0,0,0,0.45)' }}
     >
       <nav className="flex-1 overflow-y-auto py-3 no-scrollbar">
+        {/* New Split tab */}
         <SidebarTab
-          badge="Builder"
+          label="New Split"
+          isNew
           isActive={activeTabId === 'builder'}
           onClick={() => onSelectTab('builder')}
         />
 
+        {/* Saved Splits section */}
         {savedSplits.length > 0 && (
-          <div className="mx-3 my-2 h-px bg-white/[0.05]" />
+          <>
+            <p className="px-3 pt-4 pb-1.5 text-[9px] text-white/25 uppercase tracking-widest">
+              Saved Splits
+            </p>
+            {savedSplits.map(s => (
+              <SidebarTab
+                key={s.id}
+                label={s.name}
+                isActive={activeTabId === s.id}
+                onClick={() => onSelectTab(s.id)}
+                onDelete={() => onDeleteSplit(s.id)}
+                onDuplicate={() => onDuplicateSplit(s)}
+              />
+            ))}
+          </>
         )}
-
-        {savedSplits.map(s => (
-          <SidebarTab
-            key={s.id}
-            label={s.name}
-            isActive={activeTabId === s.id}
-            onClick={() => onSelectTab(s.id)}
-            onDelete={() => onDeleteSplit(s.id)}
-            onDuplicate={() => onDuplicateSplit(s)}
-          />
-        ))}
       </nav>
-
     </div>
   )
 }
 
 function SidebarTab({
   label,
-  badge,
+  isNew,
   isActive,
   onClick,
   onDelete,
   onDuplicate,
 }: {
-  label?: string
-  badge?: string
+  label: string
+  isNew?: boolean
   isActive: boolean
   onClick: () => void
   onDelete?: () => void
@@ -78,15 +82,20 @@ function SidebarTab({
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
       <div className="flex items-center gap-2 px-3 py-2.5 min-w-0">
-        {badge && (
-          <Pencil size={11} className={cn('flex-shrink-0 transition-colors', isActive ? 'text-violet-400/70' : 'text-white/25')} />
+        {isNew && (
+          <Pencil
+            size={11}
+            className={cn('flex-shrink-0 transition-colors', isActive ? 'text-violet-400/80' : 'text-violet-400/40')}
+          />
         )}
         <div className="flex-1 min-w-0">
           <p className={cn(
             'text-xs truncate transition-colors leading-snug',
-            isActive ? 'text-white font-medium' : 'text-white/60'
+            isNew
+              ? (isActive ? 'text-white/55' : 'text-white/30')
+              : (isActive ? 'text-white font-medium' : 'text-white/60')
           )}>
-            {label ?? badge}
+            {label}
           </p>
         </div>
         {(onDelete || onDuplicate) && (
