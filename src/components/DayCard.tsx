@@ -89,17 +89,23 @@ export default function DayCard({
         {/* + button */}
         {!day.isRest && availableMuscleGroups.length > 0 && (
           <DropdownMenu>
-            <DropdownMenuTrigger
-              className={cn(
-                'w-full outline-none transition-all rounded-xl border border-dashed flex items-center justify-center',
-                day.muscleGroups.length === 0
-                  ? 'flex-1 min-h-[60px] border-white/[0.08] hover:border-white/20 text-white/15 hover:text-white/35'
-                  : 'h-7 border-white/[0.06] hover:border-white/15 text-white/10 hover:text-white/30'
-              )}
-              onPointerDown={e => e.stopPropagation()}
-            >
-              <Plus size={day.muscleGroups.length === 0 ? 18 : 13} />
-            </DropdownMenuTrigger>
+            {day.muscleGroups.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center min-h-[60px]">
+                <DropdownMenuTrigger
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.09] hover:border-white/20 text-white/30 hover:text-white/65 transition-all outline-none"
+                  onPointerDown={e => e.stopPropagation()}
+                >
+                  <Plus size={17} />
+                </DropdownMenuTrigger>
+              </div>
+            ) : (
+              <DropdownMenuTrigger
+                className="w-full h-7 rounded-lg flex items-center justify-center bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/12 text-white/20 hover:text-white/50 transition-all outline-none"
+                onPointerDown={e => e.stopPropagation()}
+              >
+                <Plus size={12} />
+              </DropdownMenuTrigger>
+            )}
             <DropdownMenuContent
               align="center"
               side="bottom"
