@@ -39,7 +39,7 @@ export default function SplitSidebar({
       className="flex flex-col h-full w-52"
       style={{ background: 'rgba(0,0,0,0.45)' }}
     >
-      <nav className="flex-1 overflow-y-auto py-3 no-scrollbar">
+      <nav className="flex-1 overflow-y-auto py-1 no-scrollbar">
         {/* New Split tab */}
         <SidebarTab
           label="New Split"
@@ -51,7 +51,7 @@ export default function SplitSidebar({
         {/* Saved Splits section */}
         {savedSplits.length > 0 && (
           <>
-            <p className="px-3 pt-4 pb-2 text-[9px] text-white/25 uppercase tracking-widest">
+            <p className="px-3 pt-3 pb-1 text-[9px] text-white/25 uppercase tracking-widest">
               Saved Splits
             </p>
             {savedSplits.map(s => (
@@ -105,7 +105,7 @@ function SidebarTab({
       {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
-      <div className="flex items-center gap-2 px-3 py-3 min-w-0">
+      <div className="flex items-center gap-2 px-3 py-2 min-w-0">
         {/* Icon area */}
         {isNew ? (
           <Pencil
