@@ -55,15 +55,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-lexend: 'Lexend', sans-serif;
-  --font-ms-madi: 'Ms Madi', cursive;
+  --font-montserrat: 'Montserrat', sans-serif;
   --font-geist-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-lexend);
+  --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-ms-madi);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -149,6 +148,7 @@
   html {
     @apply font-sans;
     font-size: 17px;
+    font-weight: 500;
   }
 }
 

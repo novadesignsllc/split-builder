@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dumbbell, ChevronDown, Plus, Save, Copy, X, Minus, LayoutDashboard, Layers, FolderOpen } from 'lucide-react'
+import { ChevronDown, Plus, Save, Copy, X, Minus, LayoutDashboard, Layers, FolderOpen } from 'lucide-react'
 import { Split } from '@/lib/types'
 import {
   DropdownMenu,
@@ -96,11 +96,9 @@ export default function TopBar({
       style={{ background: 'rgba(0,0,0,0.70)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)' }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <Dumbbell size={16} className="text-violet-400/80" />
-        <span className="text-sm tracking-tight text-white/90">
-          <span className="font-light">Split</span>
-          <span className="font-serif text-lg text-white/65 ml-1" style={{ fontFamily: 'var(--font-ms-madi)' }}>Builder</span>
+      <div className="flex-shrink-0">
+        <span className="text-white leading-none tracking-tight" style={{ fontFamily: 'var(--font-montserrat)', fontWeight: 900, fontSize: '1.35rem' }}>
+          split
         </span>
       </div>
 
