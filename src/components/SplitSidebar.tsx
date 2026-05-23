@@ -105,7 +105,7 @@ function SidebarTab({
       {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
-      <div className="flex items-center gap-2 px-3 py-2 min-w-0">
+      <div className="flex items-center gap-2 px-3 py-1 min-w-0">
         {/* Icon area */}
         {isNew ? (
           <Pencil
