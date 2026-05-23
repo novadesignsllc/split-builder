@@ -35,7 +35,7 @@ export default function SplitSidebar({
         {/* Saved Splits section */}
         {savedSplits.length > 0 && (
           <>
-            <p className="px-3 pt-2 pb-1 text-[9px] text-white/25 uppercase tracking-widest">
+            <p className="px-3 pt-4 pb-2 text-[9px] text-white/25 uppercase tracking-widest">
               Saved Splits
             </p>
             {savedSplits.map(s => (
@@ -73,7 +73,7 @@ function SidebarTab({
   return (
     <div
       className={cn(
-        'group relative mx-2 my-0.5 rounded-lg cursor-pointer transition-colors',
+        'group relative mx-2 rounded-lg cursor-pointer transition-colors',
         isActive ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'
       )}
       onClick={onClick}
@@ -81,7 +81,7 @@ function SidebarTab({
       {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
-      <div className="flex items-center gap-2 px-3 py-1.5 min-w-0">
+      <div className="flex items-center gap-2 px-3 py-3 min-w-0">
         {isNew && (
           <Pencil
             size={11}
