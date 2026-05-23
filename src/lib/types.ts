@@ -28,6 +28,7 @@ export interface DayConfig {
 export interface Split {
   id: string
   name: string
+  icon?: string
   cycleDays: number
   startDay: number  // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
   days: DayConfig[]

@@ -1,6 +1,20 @@
+import { useState } from 'react'
 import { X, Copy, Pencil } from 'lucide-react'
 import { Split } from '@/lib/types'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+
+const EMOJI_OPTIONS = [
+  '💪','🏋️','🤸','🏃','🚀','⚡',
+  '🔥','💥','🎯','🏆','⭐','🌟',
+  '🦾','🧠','🫀','🦵','🤼','🏊',
+  '🚴','🥊','🧘','🎽','🏔️','🦅',
+  '🐉','☀️','🌙','💤','🥗','🧊',
+]
 
 interface SplitSidebarProps {
   savedSplits: Split[]
@@ -9,6 +23,7 @@ interface SplitSidebarProps {
   onSelectTab: (id: 'builder' | string) => void
   onDeleteSplit: (id: string) => void
   onDuplicateSplit: (split: Split) => void
+  onUpdateSplitIcon: (id: string, icon: string) => void
 }
 
 export default function SplitSidebar({
@@ -17,6 +32,7 @@ export default function SplitSidebar({
   onSelectTab,
   onDeleteSplit,
   onDuplicateSplit,
+  onUpdateSplitIcon,
 }: SplitSidebarProps) {
   return (
     <div
@@ -42,10 +58,12 @@ export default function SplitSidebar({
               <SidebarTab
                 key={s.id}
                 label={s.name}
+                icon={s.icon}
                 isActive={activeTabId === s.id}
                 onClick={() => onSelectTab(s.id)}
                 onDelete={() => onDeleteSplit(s.id)}
                 onDuplicate={() => onDuplicateSplit(s)}
+                onUpdateIcon={(emoji) => onUpdateSplitIcon(s.id, emoji)}
               />
             ))}
           </>
@@ -57,19 +75,25 @@ export default function SplitSidebar({
 
 function SidebarTab({
   label,
+  icon,
   isNew,
   isActive,
   onClick,
   onDelete,
   onDuplicate,
+  onUpdateIcon,
 }: {
   label: string
+  icon?: string
   isNew?: boolean
   isActive: boolean
   onClick: () => void
   onDelete?: () => void
   onDuplicate?: () => void
+  onUpdateIcon?: (emoji: string) => void
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+
   return (
     <div
       className={cn(
@@ -82,12 +106,51 @@ function SidebarTab({
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
       <div className="flex items-center gap-2 px-3 py-3 min-w-0">
-        {isNew && (
+        {/* Icon area */}
+        {isNew ? (
           <Pencil
             size={11}
             className={cn('flex-shrink-0 transition-colors', isActive ? 'text-violet-400/80' : 'text-violet-400/40')}
           />
+        ) : (
+          <DropdownMenu open={pickerOpen} onOpenChange={setPickerOpen}>
+            <DropdownMenuTrigger
+              className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-base leading-none outline-none transition-opacity opacity-70 hover:opacity-100"
+              onClick={e => e.stopPropagation()}
+            >
+              {icon ? (
+                <span>{icon}</span>
+              ) : (
+                <span className="w-4 h-4 rounded bg-white/[0.08] block" />
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="right"
+              align="start"
+              sideOffset={8}
+              className="p-2 border border-white/[0.08]"
+              style={{ background: 'rgba(8,8,14,0.96)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)' }}
+            >
+              <div className="grid grid-cols-6 gap-0.5">
+                {EMOJI_OPTIONS.map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={e => {
+                      e.stopPropagation()
+                      onUpdateIcon?.(emoji)
+                      setPickerOpen(false)
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-md text-base hover:bg-white/[0.08] transition-colors"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
+
+        {/* Label */}
         <div className="flex-1 min-w-0">
           <p className={cn(
             'text-xs truncate transition-colors leading-snug',
@@ -98,6 +161,8 @@ function SidebarTab({
             {label}
           </p>
         </div>
+
+        {/* Actions */}
         {(onDelete || onDuplicate) && (
           <div className="flex gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
             {onDuplicate && (

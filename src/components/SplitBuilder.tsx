@@ -20,6 +20,7 @@ import {
   loadAllSplits,
   deleteSplit,
   duplicateSplit,
+  updateSplitIcon,
 } from '@/lib/storage'
 import TopBar from './TopBar'
 import MuscleGroupBar from './MuscleGroupSidebar'
@@ -200,6 +201,12 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     setSavedSplits(loadAllSplits())
   }, [])
 
+  const handleUpdateSplitIcon = useCallback((id: string, icon: string) => {
+    updateSplitIcon(id, icon)
+    setSavedSplits(loadAllSplits())
+    if (activeTabId === id) setSplit(prev => ({ ...prev, icon }))
+  }, [activeTabId])
+
   const handleUpdateDay = useCallback((dayId: string, updates: Partial<DayConfig>) => {
     setSplit(prev => ({
       ...prev,
@@ -280,6 +287,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
               onSelectTab={handleSelectTab}
               onDeleteSplit={handleDeleteSaved}
               onDuplicateSplit={handleDuplicateSaved}
+              onUpdateSplitIcon={handleUpdateSplitIcon}
             />
           </div>
 

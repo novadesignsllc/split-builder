@@ -66,6 +66,18 @@ export function loadAllSplits(): Split[] {
   )
 }
 
+export function updateSplitIcon(id: string, icon: string): void {
+  const key = `${SPLITS_PREFIX}${id}`
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return
+    const split = JSON.parse(raw) as Split
+    localStorage.setItem(key, JSON.stringify({ ...split, icon }))
+  } catch {
+    // ignore
+  }
+}
+
 export function deleteSplit(id: string): void {
   localStorage.removeItem(`${SPLITS_PREFIX}${id}`)
 }
