@@ -128,10 +128,10 @@ function SidebarTab({
               side="right"
               align="start"
               sideOffset={8}
-              className="p-2 border border-white/[0.08]"
+              className="p-3 border border-white/[0.08]"
               style={{ background: 'rgba(8,8,14,0.96)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)' }}
             >
-              <div className="grid grid-cols-6 gap-0.5">
+              <div className="grid grid-cols-5 gap-1">
                 {EMOJI_OPTIONS.map(emoji => (
                   <button
                     key={emoji}
@@ -140,7 +140,7 @@ function SidebarTab({
                       onUpdateIcon?.(emoji)
                       setPickerOpen(false)
                     }}
-                    className="w-8 h-8 flex items-center justify-center rounded-md text-base hover:bg-white/[0.08] transition-colors"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg text-xl hover:bg-white/[0.08] transition-colors"
                   >
                     {emoji}
                   </button>
