@@ -89,23 +89,13 @@ export default function DayCard({
         {/* + button */}
         {!day.isRest && availableMuscleGroups.length > 0 && (
           <DropdownMenu>
-            {day.muscleGroups.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center min-h-[60px]">
-                <DropdownMenuTrigger
-                  className="w-9 h-9 rounded-full flex items-center justify-center bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.09] hover:border-white/20 text-white/30 hover:text-white/65 transition-all outline-none"
-                  onPointerDown={e => e.stopPropagation()}
-                >
-                  <Plus size={17} />
-                </DropdownMenuTrigger>
-              </div>
-            ) : (
-              <DropdownMenuTrigger
-                className="w-full h-7 rounded-lg flex items-center justify-center bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/12 text-white/20 hover:text-white/50 transition-all outline-none"
-                onPointerDown={e => e.stopPropagation()}
-              >
-                <Plus size={12} />
-              </DropdownMenuTrigger>
-            )}
+            <DropdownMenuTrigger
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.05] transition-all outline-none w-full"
+              onPointerDown={e => e.stopPropagation()}
+            >
+              <Plus size={12} className="flex-shrink-0" />
+              <span className="text-xs">Add</span>
+            </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
               side="bottom"
@@ -130,10 +120,6 @@ export default function DayCard({
           </DropdownMenu>
         )}
 
-        {/* Drag-over drop indicator */}
-        {day.muscleGroups.length > 0 && showHighlight && (
-          <div className="h-7 rounded-xl border border-dashed border-violet-400/25" />
-        )}
       </div>
     </div>
   )
