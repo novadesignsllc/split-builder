@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { DayConfig, MuscleGroupDay, Exercise } from '@/lib/types'
-import { Switch } from '@/components/ui/switch'
 import MuscleGroupOnDay from '@/components/MuscleGroupOnDay'
 import { getDayNameFull } from '@/lib/days'
-import { Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface DayCardProps {
@@ -23,31 +20,16 @@ export default function DayCard({
   dayIndex,
   startDay,
   exercises,
-  onUpdateDay,
+  onUpdateDay: _onUpdateDay,
   onUpdateMuscleGroupDay,
   onRemoveMuscleGroup,
   onOpenExerciseModal,
 }: DayCardProps) {
-  const [isEditingLabel, setIsEditingLabel] = useState(false)
-  const [labelDraft, setLabelDraft] = useState(day.label)
-
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${day.id}`,
     data: { dayId: day.id },
     disabled: day.isRest,
   })
-
-  function commitLabel() {
-    setIsEditingLabel(false)
-    const trimmed = labelDraft.trim()
-    if (trimmed !== day.label) onUpdateDay(day.id, { label: trimmed })
-    else setLabelDraft(day.label)
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') commitLabel()
-    if (e.key === 'Escape') { setLabelDraft(day.label); setIsEditingLabel(false) }
-  }
 
   const showHighlight = isOver && !day.isRest
   const dayName = getDayNameFull(startDay, dayIndex)
@@ -69,42 +51,8 @@ export default function DayCard({
       }}
     >
       {/* Header */}
-      <div className="px-3 pt-3 pb-2.5 flex-shrink-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white/80 leading-tight tracking-tight">{dayName}</p>
-            {isEditingLabel ? (
-              <input
-                autoFocus
-                type="text"
-                value={labelDraft}
-                onChange={e => setLabelDraft(e.target.value)}
-                onBlur={commitLabel}
-                onKeyDown={handleKeyDown}
-                placeholder="Add label…"
-                className="mt-1 text-xs text-white/60 bg-white/[0.05] border border-violet-400/25 rounded-md px-1.5 py-0.5 w-full outline-none"
-              />
-            ) : (
-              <button
-                onClick={() => { setLabelDraft(day.label); setIsEditingLabel(true) }}
-                className="mt-0.5 flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 group/label transition-colors"
-              >
-                <span className={day.label ? 'text-white/40' : 'italic'}>
-                  {day.label || 'label…'}
-                </span>
-                <Pencil size={8} className="opacity-0 group-hover/label:opacity-100 transition-opacity" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
-            <span className="text-[10px] text-white/20">Rest</span>
-            <Switch
-              size="sm"
-              checked={day.isRest}
-              onCheckedChange={(checked: boolean) => onUpdateDay(day.id, { isRest: checked })}
-            />
-          </div>
-        </div>
+      <div className="px-3 pt-3 pb-2.5 flex-shrink-0 text-center">
+        <p className="text-sm font-medium text-white/80 leading-tight tracking-tight">{dayName}</p>
       </div>
 
       {/* Drop zone */}
@@ -122,9 +70,7 @@ export default function DayCard({
         )}
 
         {day.muscleGroups.length === 0 && day.isRest && (
-          <div className="flex-1 flex items-center justify-center min-h-[60px]">
-            <p className="text-[11px] text-white/15 italic">rest</p>
-          </div>
+          <div className="flex-1 min-h-[60px]" />
         )}
 
         {day.muscleGroups.map(mg => (

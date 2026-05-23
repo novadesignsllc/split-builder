@@ -275,7 +275,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
 
         <div className="flex-1 overflow-auto p-4 min-h-0">
           <div
-            className="grid gap-3 h-full"
+            className="grid gap-1 h-full"
             style={{
               gridTemplateColumns: split.cycleDays <= 7
                 ? `repeat(${split.cycleDays}, 1fr)`

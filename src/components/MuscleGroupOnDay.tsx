@@ -39,27 +39,27 @@ export default function MuscleGroupOnDay({
       <div
         {...attributes}
         {...listeners}
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-white/[0.05] hover:border-white/[0.09] group cursor-grab active:cursor-grabbing touch-none select-none transition-colors"
+        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/[0.05] hover:border-white/[0.09] group cursor-grab active:cursor-grabbing touch-none select-none transition-colors"
         style={{ background: 'rgba(255,255,255,0.025)' }}
       >
         <span className="flex-shrink-0 text-white/15 p-0.5">
-          <GripVertical size={11} />
+          <GripVertical size={13} />
         </span>
 
         <span
-          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: dotColor }}
         />
 
         <button
           onPointerDown={e => e.stopPropagation()}
           onClick={() => onOpenExerciseModal(dayId, muscleGroupDay.id)}
-          className="flex-1 min-w-0 text-xs font-medium text-white/65 hover:text-white/90 text-left truncate transition-colors"
+          className="flex-1 min-w-0 text-sm font-medium text-white/65 hover:text-white/90 text-left truncate transition-colors"
         >
           {muscleGroupDay.muscleGroup}
         </button>
 
-        <span className="text-[10px] text-white/20 flex-shrink-0">
+        <span className="text-xs text-white/20 flex-shrink-0">
           {muscleGroupDay.exercises.length > 0 ? `${muscleGroupDay.exercises.length} ex` : ''}
         </span>
 
@@ -69,7 +69,7 @@ export default function MuscleGroupOnDay({
           className="flex-shrink-0 text-white/15 hover:text-red-400/70 opacity-0 group-hover:opacity-100 transition-all p-0.5"
           aria-label={`Remove ${muscleGroupDay.muscleGroup}`}
         >
-          <X size={10} />
+          <X size={12} />
         </button>
       </div>
 
