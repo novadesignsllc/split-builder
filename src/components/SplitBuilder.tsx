@@ -10,6 +10,7 @@ import {
   useSensors,
 } from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
+import { GripVertical } from 'lucide-react'
 import { Exercise, Split, DayConfig, MuscleGroupDay } from '@/lib/types'
 import {
   createDefaultSplit,
@@ -38,6 +39,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
   const [split, setSplit] = useState<Split>(createDefaultSplit)
   const [savedSplits, setSavedSplits] = useState<Split[]>([])
   const [activeDragMuscle, setActiveDragMuscle] = useState<string | null>(null)
+  const [activeDragType, setActiveDragType] = useState<string | null>(null)
   const [view, setView] = useState<AppView>('builder')
   const [exerciseModal, setExerciseModal] = useState<{
     dayId: string
@@ -65,11 +67,13 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     const data = event.active.data.current
     if (data?.type === 'muscleGroup' || data?.type === 'muscleGroupFromDay') {
       setActiveDragMuscle(data.muscleGroup as string)
+      setActiveDragType(data.type as string)
     }
   }, [])
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     setActiveDragMuscle(null)
+    setActiveDragType(null)
     const { active, over } = event
     if (!over) return
 
@@ -316,13 +320,16 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
 
       <DragOverlay>
         {activeDragMuscle && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 shadow-2xl text-sm font-medium cursor-grabbing select-none text-white/90"
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/10 shadow-2xl text-sm font-medium cursor-grabbing select-none text-white/90"
             style={{
               background: 'rgba(0,0,0,0.80)',
               backdropFilter: 'blur(24px)',
               boxShadow: `0 0 24px ${MUSCLE_COLORS[activeDragMuscle] ?? '#7C3AED'}33`,
             }}
           >
+            {activeDragType === 'muscleGroupFromDay' && (
+              <GripVertical size={13} className="text-white/30 flex-shrink-0" />
+            )}
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: MUSCLE_COLORS[activeDragMuscle] ?? '#7C3AED' }}
