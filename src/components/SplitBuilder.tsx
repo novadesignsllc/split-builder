@@ -23,7 +23,6 @@ import {
   updateSplitIcon,
 } from '@/lib/storage'
 import TopBar from './TopBar'
-import MuscleGroupBar from './MuscleGroupSidebar'
 import DayCard from './DayCard'
 import AnalyticsPanel from './AnalyticsPanel'
 import SplitSidebar from './SplitSidebar'
@@ -196,6 +195,22 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     }
   }, [activeTabId])
 
+  const handleAddMuscleGroup = useCallback((dayId: string, muscleGroup: string) => {
+    setSplit(prev => {
+      const day = prev.days.find(d => d.id === dayId)
+      if (!day || day.isRest) return prev
+      if (day.muscleGroups.some(mg => mg.muscleGroup === muscleGroup)) return prev
+      return {
+        ...prev,
+        days: prev.days.map(d =>
+          d.id === dayId
+            ? { ...d, muscleGroups: [...d.muscleGroups, { id: uuidv4(), muscleGroup, exercises: [] }] }
+            : d
+        ),
+      }
+    })
+  }, [])
+
   const handleDuplicateSaved = useCallback((s: Split) => {
     duplicateSplit(s)
     setSavedSplits(loadAllSplits())
@@ -313,12 +328,12 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
                     onUpdateMuscleGroupDay={handleUpdateMuscleGroupDay}
                     onRemoveMuscleGroup={handleRemoveMuscleGroup}
                     onOpenExerciseModal={handleOpenExerciseModal}
+                    onAddMuscleGroup={handleAddMuscleGroup}
                   />
                 ))}
               </div>
             </div>
 
-            <MuscleGroupBar />
             <AnalyticsPanel split={split} exercises={exercises} />
           </div>
         </div>
