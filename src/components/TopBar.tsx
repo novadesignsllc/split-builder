@@ -112,10 +112,8 @@ export default function TopBar({
       {/* Settings + Save */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] border border-white/[0.07] transition-colors outline-none">
-              <Settings size={14} />
-            </button>
+          <DropdownMenuTrigger className="h-8 w-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] border border-white/[0.07] transition-colors outline-none">
+            <Settings size={14} />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
