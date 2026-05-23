@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -25,27 +25,28 @@ import TopBar from './TopBar'
 import MuscleGroupBar from './MuscleGroupSidebar'
 import DayCard from './DayCard'
 import AnalyticsPanel from './AnalyticsPanel'
-import Dashboard from './Dashboard'
+import SplitSidebar from './SplitSidebar'
 import ExerciseModal from './ExerciseModal'
 import { MUSCLE_COLORS } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 
 interface SplitBuilderProps {
   exercises: Exercise[]
 }
-
-export type AppView = 'builder' | 'dashboard'
 
 export function SplitBuilder({ exercises }: SplitBuilderProps) {
   const [split, setSplit] = useState<Split>(createDefaultSplit)
   const [savedSplits, setSavedSplits] = useState<Split[]>([])
   const [activeDragMuscle, setActiveDragMuscle] = useState<string | null>(null)
   const [activeDragType, setActiveDragType] = useState<string | null>(null)
-  const [view, setView] = useState<AppView>('builder')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [activeTabId, setActiveTabId] = useState<'builder' | string>('builder')
   const [exerciseModal, setExerciseModal] = useState<{
     dayId: string
     mgId: string
   } | null>(null)
   const [mounted, setMounted] = useState(false)
+  const builderDraftRef = useRef<Split | null>(null)
 
   useEffect(() => {
     const stored = loadCurrentSplit()
@@ -142,8 +143,28 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     setSplit(prev => ({ ...prev, startDay }))
   }, [])
 
-  const handleNew = useCallback(() => {
+  const handleSelectTab = useCallback((tabId: 'builder' | string) => {
+    if (tabId === activeTabId) return
+
+    if (activeTabId === 'builder') {
+      builderDraftRef.current = split
+    }
+
+    if (tabId === 'builder') {
+      setSplit(builderDraftRef.current ?? createDefaultSplit())
+    } else {
+      const saved = savedSplits.find(s => s.id === tabId)
+      if (saved) setSplit(saved)
+    }
+
+    setActiveTabId(tabId)
+    setExerciseModal(null)
+  }, [activeTabId, split, savedSplits])
+
+  const handleNewSplit = useCallback(() => {
+    builderDraftRef.current = null
     setSplit(createDefaultSplit())
+    setActiveTabId('builder')
     setExerciseModal(null)
   }, [])
 
@@ -159,18 +180,20 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     const saved = saveSplit(toSave)
     setSavedSplits(loadAllSplits())
     setSplit(saved)
-  }, [split])
-
-  const handleLoad = useCallback((loaded: Split) => {
-    setSplit(loaded)
-    setExerciseModal(null)
-    setView('builder')
-  }, [])
+    if (activeTabId === 'builder') {
+      builderDraftRef.current = null
+      setActiveTabId(saved.id)
+    }
+  }, [split, activeTabId])
 
   const handleDeleteSaved = useCallback((id: string) => {
     deleteSplit(id)
     setSavedSplits(loadAllSplits())
-  }, [])
+    if (activeTabId === id) {
+      setActiveTabId('builder')
+      setSplit(builderDraftRef.current ?? createDefaultSplit())
+    }
+  }, [activeTabId])
 
   const handleDuplicateSaved = useCallback((s: Split) => {
     duplicateSplit(s)
@@ -213,43 +236,14 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     ? split.days.find(d => d.id === exerciseModal.dayId)?.muscleGroups.find(mg => mg.id === exerciseModal.mgId)
     : null
 
+  const builderSplitName = activeTabId === 'builder'
+    ? split.name
+    : (builderDraftRef.current?.name ?? '')
+
   if (!mounted) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
         <div className="text-white/20 text-sm tracking-widest uppercase text-xs">Loading</div>
-      </div>
-    )
-  }
-
-  if (view === 'dashboard') {
-    return (
-      <div className="flex flex-col h-screen bg-black relative">
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-950/60 blur-[140px]" />
-          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-amber-950/40 blur-[120px]" />
-        </div>
-        <TopBar
-          split={split}
-          savedSplits={savedSplits}
-          view={view}
-          onUpdateName={handleUpdateName}
-          onUpdateCycleDays={handleUpdateCycleDays}
-          onUpdateStartDay={handleUpdateStartDay}
-          onNew={handleNew}
-          onSave={handleSave}
-          onLoad={handleLoad}
-          onDeleteSaved={handleDeleteSaved}
-          onDuplicateSaved={handleDuplicateSaved}
-          onToggleView={() => setView('builder')}
-        />
-        <Dashboard
-          savedSplits={savedSplits}
-          exercises={exercises}
-          onEditSplit={handleLoad}
-          onDeleteSplit={handleDeleteSaved}
-          onDuplicateSplit={handleDuplicateSaved}
-          onNewSplit={handleNew}
-        />
       </div>
     )
   }
@@ -262,48 +256,64 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-amber-950/40 blur-[120px]" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-indigo-950/30 blur-[100px]" />
         </div>
+
         <TopBar
           split={split}
-          savedSplits={savedSplits}
-          view={view}
           onUpdateName={handleUpdateName}
           onUpdateCycleDays={handleUpdateCycleDays}
           onUpdateStartDay={handleUpdateStartDay}
-          onNew={handleNew}
           onSave={handleSave}
-          onLoad={handleLoad}
-          onDeleteSaved={handleDeleteSaved}
-          onDuplicateSaved={handleDuplicateSaved}
-          onToggleView={() => setView('dashboard')}
+          onToggleSidebar={() => setSidebarOpen(o => !o)}
         />
 
-        <div className="flex-1 overflow-auto p-4 min-h-0">
-          <div
-            className="grid gap-1 h-full"
-            style={{
-              gridTemplateColumns: split.cycleDays <= 7
-                ? `repeat(${split.cycleDays}, 1fr)`
-                : `repeat(${split.cycleDays}, minmax(160px, 1fr))`,
-            }}
-          >
-            {split.days.map((day, index) => (
-              <DayCard
-                key={day.id}
-                day={day}
-                dayIndex={index}
-                startDay={split.startDay}
-                exercises={exercises}
-                onUpdateDay={handleUpdateDay}
-                onUpdateMuscleGroupDay={handleUpdateMuscleGroupDay}
-                onRemoveMuscleGroup={handleRemoveMuscleGroup}
-                onOpenExerciseModal={handleOpenExerciseModal}
-              />
-            ))}
+        <div className="flex flex-1 min-h-0">
+          {/* Left sidebar */}
+          <div className={cn(
+            'flex-shrink-0 overflow-hidden transition-[width] duration-200',
+            sidebarOpen ? 'w-52' : 'w-0'
+          )}>
+            <SplitSidebar
+              savedSplits={savedSplits}
+              activeTabId={activeTabId}
+              builderSplitName={builderSplitName}
+              onSelectTab={handleSelectTab}
+              onDeleteSplit={handleDeleteSaved}
+              onDuplicateSplit={handleDuplicateSaved}
+              onNewSplit={handleNewSplit}
+            />
+          </div>
+
+          {/* Builder content */}
+          <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex-1 overflow-auto p-4 min-h-0">
+              <div
+                className="grid gap-1 h-full"
+                style={{
+                  gridTemplateColumns: split.cycleDays <= 7
+                    ? `repeat(${split.cycleDays}, 1fr)`
+                    : `repeat(${split.cycleDays}, minmax(160px, 1fr))`,
+                }}
+              >
+                {split.days.map((day, index) => (
+                  <DayCard
+                    key={day.id}
+                    day={day}
+                    dayIndex={index}
+                    startDay={split.startDay}
+                    exercises={exercises}
+                    onUpdateDay={handleUpdateDay}
+                    onUpdateMuscleGroupDay={handleUpdateMuscleGroupDay}
+                    onRemoveMuscleGroup={handleRemoveMuscleGroup}
+                    onOpenExerciseModal={handleOpenExerciseModal}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <MuscleGroupBar />
+            <AnalyticsPanel split={split} exercises={exercises} />
           </div>
         </div>
-
-        <MuscleGroupBar />
-        <AnalyticsPanel split={split} exercises={exercises} />
       </div>
 
       {exerciseModal && exerciseModalMG && (
