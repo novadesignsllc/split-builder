@@ -12,17 +12,11 @@ export interface ExerciseEntry {
   sets: PlannedSet[]
 }
 
-export interface MuscleGroupDay {
-  id: string
-  muscleGroup: string
-  exercises: ExerciseEntry[]
-}
-
 export interface DayConfig {
   id: string
   label: string
   isRest: boolean
-  muscleGroups: MuscleGroupDay[]
+  exercises: ExerciseEntry[]
 }
 
 export interface Split {
@@ -54,3 +48,5 @@ export interface ChartEntry {
   mev: number
   mav: number
 }
+
+export type DayType = 'Push' | 'Pull' | 'Legs' | 'Upper' | 'Lower' | 'Full Body' | 'Core' | null

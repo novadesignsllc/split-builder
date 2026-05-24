@@ -1,4 +1,4 @@
-import { Split } from './types'
+import { Split, DayConfig } from './types'
 import { v4 as uuidv4 } from 'uuid'
 
 const PREFIX = 'splitBuilder:'
@@ -15,16 +15,39 @@ export function createDefaultSplit(): Split {
       id: uuidv4(),
       label: '',
       isRest: false,
-      muscleGroups: [],
+      exercises: [],
     })),
     lastModified: new Date().toISOString(),
   }
 }
 
-function migrateSplit(split: Split): Split {
+/** Migrate old format (muscleGroups) to new flat exercises format */
+function migrateDay(day: DayConfig & { muscleGroups?: unknown }): DayConfig {
+  // If already has exercises array, just ensure it exists
+  if (Array.isArray(day.exercises)) {
+    return { id: day.id, label: day.label ?? '', isRest: day.isRest ?? false, exercises: day.exercises }
+  }
+
+  // Old format: flatten muscleGroups[].exercises into a single exercises array
+  const oldMgs = (day as { muscleGroups?: Array<{ exercises?: unknown[] }> }).muscleGroups
+  const flatExercises = Array.isArray(oldMgs)
+    ? oldMgs.flatMap(mg => (Array.isArray(mg.exercises) ? mg.exercises : []))
+    : []
+
+  return {
+    id: day.id,
+    label: day.label ?? '',
+    isRest: day.isRest ?? false,
+    exercises: flatExercises as DayConfig['exercises'],
+  }
+}
+
+function migrateSplit(raw: Record<string, unknown>): Split {
+  const split = raw as Split & { days: Array<DayConfig & { muscleGroups?: unknown }> }
   return {
     ...split,
     startDay: split.startDay ?? 1,
+    days: (split.days ?? []).map(migrateDay),
   }
 }
 
@@ -32,7 +55,7 @@ export function loadCurrentSplit(): Split | null {
   try {
     const raw = localStorage.getItem(CURRENT_KEY)
     if (!raw) return null
-    return migrateSplit(JSON.parse(raw) as Split)
+    return migrateSplit(JSON.parse(raw) as Record<string, unknown>)
   } catch {
     return null
   }
@@ -55,7 +78,7 @@ export function loadAllSplits(): Split[] {
     if (key?.startsWith(SPLITS_PREFIX)) {
       try {
         const raw = localStorage.getItem(key)
-        if (raw) splits.push(migrateSplit(JSON.parse(raw) as Split))
+        if (raw) splits.push(migrateSplit(JSON.parse(raw) as Record<string, unknown>))
       } catch {
         // ignore corrupt entries
       }
@@ -90,14 +113,10 @@ export function duplicateSplit(split: Split): Split {
     days: split.days.map(day => ({
       ...day,
       id: uuidv4(),
-      muscleGroups: day.muscleGroups.map(mg => ({
-        ...mg,
+      exercises: day.exercises.map(ex => ({
+        ...ex,
         id: uuidv4(),
-        exercises: mg.exercises.map(ex => ({
-          ...ex,
-          id: uuidv4(),
-          sets: ex.sets.map(s => ({ ...s, id: uuidv4() })),
-        })),
+        sets: ex.sets.map(s => ({ ...s, id: uuidv4() })),
       })),
     })),
     lastModified: new Date().toISOString(),

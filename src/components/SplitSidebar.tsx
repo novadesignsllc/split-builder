@@ -1,189 +1,148 @@
 import { useState } from 'react'
-import { X, Copy, Pencil } from 'lucide-react'
+import { Plus, MoreHorizontal, Copy, Trash2 } from 'lucide-react'
 import { Split } from '@/lib/types'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
-const EMOJI_OPTIONS = [
-  '💪','🏋️','🤸','🏃','🚀','⚡',
-  '🔥','💥','🎯','🏆','⭐','🌟',
-  '🦾','🧠','🫀','🦵','🤼','🏊',
-  '🚴','🥊','🧘','🎽','🏔️','🦅',
-  '🐉','☀️','🌙','💤','🥗','🧊',
-]
-
 interface SplitSidebarProps {
   savedSplits: Split[]
-  activeTabId: 'builder' | string
-  builderSplitName: string
-  onSelectTab: (id: 'builder' | string) => void
+  activeId: string | null  // null = unsaved draft
+  onSelectSplit: (id: string | null) => void
+  onNewSplit: () => void
   onDeleteSplit: (id: string) => void
   onDuplicateSplit: (split: Split) => void
-  onUpdateSplitIcon: (id: string, icon: string) => void
 }
 
 export default function SplitSidebar({
   savedSplits,
-  activeTabId,
-  onSelectTab,
+  activeId,
+  onSelectSplit,
+  onNewSplit,
   onDeleteSplit,
   onDuplicateSplit,
-  onUpdateSplitIcon,
 }: SplitSidebarProps) {
   return (
-    <div
-      className="flex flex-col h-full w-52"
-      style={{ background: 'rgba(0,0,0,0.45)' }}
-    >
-      <nav className="flex-1 overflow-y-auto py-1 no-scrollbar">
-        {/* New Split tab */}
-        <SidebarTab
-          label="New Split"
-          isNew
-          isActive={activeTabId === 'builder'}
-          onClick={() => onSelectTab('builder')}
-        />
+    <div className="flex flex-col h-full w-52" style={{ background: 'rgba(0,0,0,0.50)' }}>
+      {/* New Split button */}
+      <div className="p-3 flex-shrink-0">
+        <button
+          onClick={onNewSplit}
+          className={cn(
+            'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border',
+            activeId === null
+              ? 'bg-violet-500/15 border-violet-500/25 text-violet-300'
+              : 'border-white/[0.07] text-white/40 hover:text-white/70 hover:bg-white/[0.04] hover:border-white/[0.10]'
+          )}
+          style={activeId === null ? {} : { background: 'rgba(255,255,255,0.02)' }}
+        >
+          <Plus size={14} className="flex-shrink-0" />
+          New Split
+        </button>
+      </div>
 
-        {/* Saved Splits section */}
-        {savedSplits.length > 0 && (
-          <>
-            <p className="px-3 pt-3 pb-1 text-[9px] text-white/25 uppercase tracking-widest">
-              Saved Splits
-            </p>
+      {/* Saved splits */}
+      {savedSplits.length > 0 && (
+        <div className="flex-1 overflow-y-auto min-h-0 no-scrollbar">
+          <p className="px-4 pt-1 pb-2 text-[9px] font-semibold text-white/20 uppercase tracking-[0.18em]">
+            My Splits
+          </p>
+          <nav className="px-2 space-y-0.5 pb-4">
             {savedSplits.map(s => (
-              <SidebarTab
+              <SplitItem
                 key={s.id}
-                label={s.name}
-                icon={s.icon}
-                isActive={activeTabId === s.id}
-                onClick={() => onSelectTab(s.id)}
+                split={s}
+                isActive={activeId === s.id}
+                onClick={() => onSelectSplit(s.id)}
                 onDelete={() => onDeleteSplit(s.id)}
                 onDuplicate={() => onDuplicateSplit(s)}
-                onUpdateIcon={(emoji) => onUpdateSplitIcon(s.id, emoji)}
               />
             ))}
-          </>
-        )}
-      </nav>
+          </nav>
+        </div>
+      )}
     </div>
   )
 }
 
-function SidebarTab({
-  label,
-  icon,
-  isNew,
+function SplitItem({
+  split,
   isActive,
   onClick,
   onDelete,
   onDuplicate,
-  onUpdateIcon,
 }: {
-  label: string
-  icon?: string
-  isNew?: boolean
+  split: Split
   isActive: boolean
   onClick: () => void
-  onDelete?: () => void
-  onDuplicate?: () => void
-  onUpdateIcon?: (emoji: string) => void
+  onDelete: () => void
+  onDuplicate: () => void
 }) {
-  const [pickerOpen, setPickerOpen] = useState(false)
-
   return (
     <div
       className={cn(
-        'group relative mx-2 rounded-lg cursor-pointer transition-colors',
-        isActive ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'
+        'group relative flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all',
+        isActive
+          ? 'bg-white/[0.07] border border-white/[0.10]'
+          : 'border border-transparent hover:bg-white/[0.03] hover:border-white/[0.06]'
       )}
       onClick={onClick}
     >
       {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-400/60 rounded-full" />
       )}
-      <div className="flex items-center gap-2 px-3 py-1 min-w-0">
-        {/* Icon area */}
-        {isNew ? (
-          <Pencil
-            size={11}
-            className={cn('flex-shrink-0 transition-colors', isActive ? 'text-violet-400/80' : 'text-violet-400/40')}
-          />
-        ) : (
-          <DropdownMenu open={pickerOpen} onOpenChange={setPickerOpen}>
-            <DropdownMenuTrigger
-              className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-base leading-none outline-none transition-opacity opacity-70 hover:opacity-100"
-              onClick={e => e.stopPropagation()}
-            >
-              {icon ? (
-                <span>{icon}</span>
-              ) : (
-                <span className="w-4 h-4 rounded bg-white/[0.08] block" />
-              )}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="right"
-              align="start"
-              sideOffset={8}
-              className="p-3 border border-white/[0.08]"
-              style={{ background: 'rgba(8,8,14,0.96)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)' }}
-            >
-              <div className="grid grid-cols-5 gap-1">
-                {EMOJI_OPTIONS.map(emoji => (
-                  <button
-                    key={emoji}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onUpdateIcon?.(emoji)
-                      setPickerOpen(false)
-                    }}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg text-xl hover:bg-white/[0.08] transition-colors"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
 
-        {/* Label */}
-        <div className="flex-1 min-w-0">
-          <p className={cn(
-            'text-xs truncate transition-colors leading-snug',
-            isNew
-              ? (isActive ? 'text-white/55' : 'text-white/30')
-              : (isActive ? 'text-white font-medium' : 'text-white/60')
-          )}>
-            {label}
-          </p>
-        </div>
+      {/* Icon */}
+      <span className="text-base leading-none flex-shrink-0">
+        {split.icon ?? '💪'}
+      </span>
 
-        {/* Actions */}
-        {(onDelete || onDuplicate) && (
-          <div className="flex gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            {onDuplicate && (
-              <button
-                onClick={e => { e.stopPropagation(); onDuplicate() }}
-                className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-colors"
-              >
-                <Copy size={10} />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={e => { e.stopPropagation(); onDelete() }}
-                className="w-5 h-5 flex items-center justify-center rounded text-white/25 hover:text-red-400/70 hover:bg-red-950/30 transition-colors"
-              >
-                <X size={10} />
-              </button>
-            )}
-          </div>
+      {/* Name */}
+      <span
+        className={cn(
+          'flex-1 min-w-0 text-xs truncate transition-colors',
+          isActive ? 'text-white font-medium' : 'text-white/55'
         )}
-      </div>
+      >
+        {split.name}
+      </span>
+
+      {/* ⋯ menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className={cn(
+            'flex-shrink-0 p-1 rounded-md transition-colors outline-none',
+            'text-white/0 group-hover:text-white/30 hover:!text-white/70 hover:bg-white/[0.06]',
+            isActive && 'text-white/20'
+          )}
+          onClick={e => e.stopPropagation()}
+        >
+          <MoreHorizontal size={13} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          sideOffset={4}
+          className="w-36 border border-white/[0.08] p-1"
+          style={{ background: 'rgba(8,8,14,0.97)', backdropFilter: 'blur(32px)' }}
+        >
+          <DropdownMenuItem
+            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-white/60 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+            onClick={e => { e.stopPropagation(); onDuplicate() }}
+          >
+            <Copy size={11} /> Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400/70 hover:text-red-400 hover:bg-red-950/30 cursor-pointer"
+            onClick={e => { e.stopPropagation(); onDelete() }}
+          >
+            <Trash2 size={11} /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

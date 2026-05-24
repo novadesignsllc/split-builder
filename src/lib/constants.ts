@@ -42,6 +42,12 @@ export const VOLUME_TARGETS: Record<string, { mev: number; mav: number }> = {
   'Neck': { mev: 0, mav: 10 },
 }
 
+// Day type detection — which db muscle strings belong to push / pull / legs
+export const PUSH_DB_MUSCLES = new Set(['chest', 'shoulders', 'triceps'])
+export const PULL_DB_MUSCLES = new Set(['lats', 'middle back', 'upper back', 'biceps', 'traps'])
+export const LEG_DB_MUSCLES = new Set(['quadriceps', 'hamstrings', 'glutes', 'calves', 'adductors', 'abductors'])
+export const CORE_DB_MUSCLES = new Set(['abdominals', 'lower back'])
+
 export const LEG_MUSCLES = new Set(['Quads', 'Hamstrings', 'Glutes', 'Calves'])
 
 export const EQUIPMENT_OPTIONS = [
@@ -76,4 +82,14 @@ export const MUSCLE_COLORS: Record<string, string> = {
   'Abs': '#0ea5e9',
   'Lower Back': '#78716c',
   'Neck': '#64748b',
+}
+
+export const DAY_TYPE_COLORS: Record<string, string> = {
+  'Push': '#f97316',
+  'Pull': '#3b82f6',
+  'Legs': '#10b981',
+  'Upper': '#8b5cf6',
+  'Lower': '#22d3ee',
+  'Full Body': '#14b8a6',
+  'Core': '#f59e0b',
 }

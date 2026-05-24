@@ -1,17 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
-import { GripVertical } from 'lucide-react'
-import { Exercise, Split, DayConfig, MuscleGroupDay } from '@/lib/types'
+import { Pencil, Check, X, Plus, Moon } from 'lucide-react'
+import { Exercise, Split, DayConfig, ExerciseEntry } from '@/lib/types'
 import {
   createDefaultSplit,
   loadCurrentSplit,
@@ -20,14 +10,13 @@ import {
   loadAllSplits,
   deleteSplit,
   duplicateSplit,
-  updateSplitIcon,
 } from '@/lib/storage'
+import { computeDayTypeLabels } from '@/lib/analytics'
 import TopBar from './TopBar'
 import DayCard from './DayCard'
 import AnalyticsPanel from './AnalyticsPanel'
 import SplitSidebar from './SplitSidebar'
-import ExerciseModal from './ExerciseModal'
-import { MUSCLE_COLORS } from '@/lib/constants'
+import ExercisePickerModal from './ExercisePickerModal'
 import { cn } from '@/lib/utils'
 
 interface SplitBuilderProps {
@@ -37,16 +26,15 @@ interface SplitBuilderProps {
 export function SplitBuilder({ exercises }: SplitBuilderProps) {
   const [split, setSplit] = useState<Split>(createDefaultSplit)
   const [savedSplits, setSavedSplits] = useState<Split[]>([])
-  const [activeDragMuscle, setActiveDragMuscle] = useState<string | null>(null)
-  const [activeDragType, setActiveDragType] = useState<string | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)  // null = unsaved draft
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [activeTabId, setActiveTabId] = useState<'builder' | string>('builder')
-  const [exerciseModal, setExerciseModal] = useState<{
-    dayId: string
-    mgId: string
-  } | null>(null)
   const [mounted, setMounted] = useState(false)
-  const builderDraftRef = useRef<Split | null>(null)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const [pickerState, setPickerState] = useState<{ dayId: string; dayIndex: number } | null>(null)
+  const draftRef = useRef<Split | null>(null)
+
+  // ─── Boot ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const stored = loadCurrentSplit()
@@ -59,79 +47,94 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     if (mounted) saveCurrentSplit(split)
   }, [split, mounted])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
-  )
+  // ─── Computed ────────────────────────────────────────────────────────────
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const data = event.active.data.current
-    if (data?.type === 'muscleGroup' || data?.type === 'muscleGroupFromDay') {
-      setActiveDragMuscle(data.muscleGroup as string)
-      setActiveDragType(data.type as string)
+  const dayTypeLabels = computeDayTypeLabels(split, exercises)
+
+  // ─── Navigation ─────────────────────────────────────────────────────────
+
+  const handleNewSplit = useCallback(() => {
+    draftRef.current = null
+    setSplit(createDefaultSplit())
+    setActiveId(null)
+    setPickerState(null)
+    setIsEditingName(false)
+  }, [])
+
+  const handleSelectSplit = useCallback((id: string | null) => {
+    if (id === activeId) return
+    if (activeId === null) draftRef.current = split
+    if (id === null) {
+      setSplit(draftRef.current ?? createDefaultSplit())
+    } else {
+      const found = savedSplits.find(s => s.id === id)
+      if (found) setSplit(found)
     }
-  }, [])
+    setActiveId(id)
+    setPickerState(null)
+    setIsEditingName(false)
+  }, [activeId, split, savedSplits])
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setActiveDragMuscle(null)
-    setActiveDragType(null)
-    const { active, over } = event
-    if (!over) return
+  // ─── Name editing ────────────────────────────────────────────────────────
 
-    const activeData = active.data.current
-    const overId = String(over.id)
-    if (!overId.startsWith('day-')) return
-    const targetDayId = overId.replace('day-', '')
+  function startEditingName() {
+    setNameDraft(split.name)
+    setIsEditingName(true)
+  }
 
-    if (activeData?.type === 'muscleGroup') {
-      const muscleGroup = activeData.muscleGroup as string
-      setSplit(prev => {
-        const day = prev.days.find(d => d.id === targetDayId)
-        if (!day || day.isRest) return prev
-        if (day.muscleGroups.some(mg => mg.muscleGroup === muscleGroup)) return prev
-        return {
-          ...prev,
-          days: prev.days.map(d =>
-            d.id === targetDayId
-              ? { ...d, muscleGroups: [...d.muscleGroups, { id: uuidv4(), muscleGroup, exercises: [] }] }
-              : d
-          ),
-        }
-      })
-    } else if (activeData?.type === 'muscleGroupFromDay') {
-      const { fromDayId, mgId, muscleGroup } = activeData as {
-        fromDayId: string; mgId: string; muscleGroup: string
-      }
-      if (targetDayId === fromDayId) return
-      setSplit(prev => {
-        const sourceMg = prev.days.find(d => d.id === fromDayId)?.muscleGroups.find(mg => mg.id === mgId)
-        if (!sourceMg) return prev
-        const targetDay = prev.days.find(d => d.id === targetDayId)
-        if (!targetDay || targetDay.isRest) return prev
-        if (targetDay.muscleGroups.some(mg => mg.muscleGroup === muscleGroup)) return prev
-        return {
-          ...prev,
-          days: prev.days.map(d => {
-            if (d.id === fromDayId) return { ...d, muscleGroups: d.muscleGroups.filter(mg => mg.id !== mgId) }
-            if (d.id === targetDayId) return { ...d, muscleGroups: [...d.muscleGroups, sourceMg] }
-            return d
-          }),
-        }
-      })
+  function commitName() {
+    setIsEditingName(false)
+    const trimmed = nameDraft.trim()
+    if (trimmed && trimmed !== split.name) {
+      setSplit(prev => ({ ...prev, name: trimmed }))
     }
+  }
+
+  function cancelEditName() {
+    setIsEditingName(false)
+  }
+
+  // ─── Split actions ───────────────────────────────────────────────────────
+
+  const handleSave = useCallback(() => {
+    let name = split.name
+    if (!name || name === 'Untitled split') {
+      const input = window.prompt('Name this split:', name)
+      if (input === null) return
+      name = input.trim() || 'Untitled split'
+    }
+    const toSave = { ...split, name }
+    const saved = saveSplit(toSave)
+    setSplit(saved)
+    setSavedSplits(loadAllSplits())
+    if (activeId === null) {
+      draftRef.current = null
+      setActiveId(saved.id)
+    }
+  }, [split, activeId])
+
+  const handleDeleteSplit = useCallback((id: string) => {
+    deleteSplit(id)
+    setSavedSplits(loadAllSplits())
+    if (activeId === id) {
+      setActiveId(null)
+      setSplit(draftRef.current ?? createDefaultSplit())
+    }
+  }, [activeId])
+
+  const handleDuplicateSplit = useCallback((s: Split) => {
+    duplicateSplit(s)
+    setSavedSplits(loadAllSplits())
   }, [])
 
-  const handleUpdateName = useCallback((name: string) => {
-    setSplit(prev => ({ ...prev, name }))
-  }, [])
+  // ─── Cycle/start day ─────────────────────────────────────────────────────
 
   const handleUpdateCycleDays = useCallback((cycleDays: number) => {
     setSplit(prev => {
-      const current = prev.days.length
-      if (cycleDays === current) return { ...prev, cycleDays }
-      if (cycleDays > current) {
-        const extra: DayConfig[] = Array.from({ length: cycleDays - current }, () => ({
-          id: uuidv4(), label: '', isRest: false, muscleGroups: [],
+      if (cycleDays === prev.days.length) return { ...prev, cycleDays }
+      if (cycleDays > prev.days.length) {
+        const extra: DayConfig[] = Array.from({ length: cycleDays - prev.days.length }, () => ({
+          id: uuidv4(), label: '', isRest: false, exercises: [],
         }))
         return { ...prev, cycleDays, days: [...prev.days, ...extra] }
       }
@@ -143,124 +146,75 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     setSplit(prev => ({ ...prev, startDay }))
   }, [])
 
-  const handleSelectTab = useCallback((tabId: 'builder' | string) => {
-    if (tabId === activeTabId) return
-
-    if (activeTabId === 'builder') {
-      builderDraftRef.current = split
-    }
-
-    if (tabId === 'builder') {
-      setSplit(builderDraftRef.current ?? createDefaultSplit())
-    } else {
-      const saved = savedSplits.find(s => s.id === tabId)
-      if (saved) setSplit(saved)
-    }
-
-    setActiveTabId(tabId)
-    setExerciseModal(null)
-  }, [activeTabId, split, savedSplits])
-
-  const handleNewSplit = useCallback(() => {
-    builderDraftRef.current = null
-    setSplit(createDefaultSplit())
-    setActiveTabId('builder')
-    setExerciseModal(null)
-  }, [])
-
-  const handleSave = useCallback(() => {
-    let name = split.name
-    if (!name || name === 'Untitled split') {
-      const input = window.prompt('Name this split:', name)
-      if (input === null) return
-      name = input.trim() || 'Untitled split'
-    }
-    const toSave = { ...split, name }
-    setSplit(toSave)
-    const saved = saveSplit(toSave)
-    setSavedSplits(loadAllSplits())
-    setSplit(saved)
-    if (activeTabId === 'builder') {
-      builderDraftRef.current = null
-      setActiveTabId(saved.id)
-    }
-  }, [split, activeTabId])
-
-  const handleDeleteSaved = useCallback((id: string) => {
-    deleteSplit(id)
-    setSavedSplits(loadAllSplits())
-    if (activeTabId === id) {
-      setActiveTabId('builder')
-      setSplit(builderDraftRef.current ?? createDefaultSplit())
-    }
-  }, [activeTabId])
-
-  const handleAddMuscleGroup = useCallback((dayId: string, muscleGroup: string) => {
-    setSplit(prev => {
-      const day = prev.days.find(d => d.id === dayId)
-      if (!day || day.isRest) return prev
-      if (day.muscleGroups.some(mg => mg.muscleGroup === muscleGroup)) return prev
-      return {
-        ...prev,
-        days: prev.days.map(d =>
-          d.id === dayId
-            ? { ...d, muscleGroups: [...d.muscleGroups, { id: uuidv4(), muscleGroup, exercises: [] }] }
-            : d
-        ),
-      }
-    })
-  }, [])
-
-  const handleDuplicateSaved = useCallback((s: Split) => {
-    duplicateSplit(s)
-    setSavedSplits(loadAllSplits())
-  }, [])
-
-  const handleUpdateSplitIcon = useCallback((id: string, icon: string) => {
-    updateSplitIcon(id, icon)
-    setSavedSplits(loadAllSplits())
-    if (activeTabId === id) setSplit(prev => ({ ...prev, icon }))
-  }, [activeTabId])
+  // ─── Day actions ─────────────────────────────────────────────────────────
 
   const handleUpdateDay = useCallback((dayId: string, updates: Partial<DayConfig>) => {
     setSplit(prev => ({
       ...prev,
-      days: prev.days.map(d => (d.id === dayId ? { ...d, ...updates } : d)),
+      days: prev.days.map(d => d.id === dayId ? { ...d, ...updates } : d),
     }))
   }, [])
 
-  const handleUpdateMuscleGroupDay = useCallback((dayId: string, mgId: string, updated: MuscleGroupDay) => {
+  const handleAddExercise = useCallback((dayId: string, entry: ExerciseEntry) => {
     setSplit(prev => ({
       ...prev,
       days: prev.days.map(d =>
-        d.id === dayId
-          ? { ...d, muscleGroups: d.muscleGroups.map(mg => (mg.id === mgId ? updated : mg)) }
-          : d
+        d.id === dayId ? { ...d, exercises: [...d.exercises, entry] } : d
       ),
     }))
   }, [])
 
-  const handleRemoveMuscleGroup = useCallback((dayId: string, mgId: string) => {
+  const handleRemoveExercise = useCallback((dayId: string, entryId: string) => {
     setSplit(prev => ({
       ...prev,
       days: prev.days.map(d =>
-        d.id === dayId ? { ...d, muscleGroups: d.muscleGroups.filter(mg => mg.id !== mgId) } : d
+        d.id === dayId ? { ...d, exercises: d.exercises.filter(e => e.id !== entryId) } : d
       ),
     }))
-    setExerciseModal(prev => (prev?.dayId === dayId && prev?.mgId === mgId ? null : prev))
   }, [])
 
-  const handleOpenExerciseModal = useCallback((dayId: string, mgId: string) => {
-    setExerciseModal({ dayId, mgId })
+  const handleReorderExercises = useCallback((dayId: string, reordered: ExerciseEntry[]) => {
+    setSplit(prev => ({
+      ...prev,
+      days: prev.days.map(d => d.id === dayId ? { ...d, exercises: reordered } : d),
+    }))
   }, [])
 
-  const exerciseModalMG = exerciseModal
-    ? split.days.find(d => d.id === exerciseModal.dayId)?.muscleGroups.find(mg => mg.id === exerciseModal.mgId)
+  const handleAddRestDay = useCallback(() => {
+    if (split.cycleDays >= 21) return
+    const newDay: DayConfig = { id: uuidv4(), label: '', isRest: true, exercises: [] }
+    setSplit(prev => ({
+      ...prev,
+      cycleDays: prev.cycleDays + 1,
+      days: [...prev.days, newDay],
+    }))
+  }, [split.cycleDays])
+
+  const handleAddWorkoutDay = useCallback(() => {
+    if (split.cycleDays >= 21) return
+    const newDay: DayConfig = { id: uuidv4(), label: '', isRest: false, exercises: [] }
+    setSplit(prev => ({
+      ...prev,
+      cycleDays: prev.cycleDays + 1,
+      days: [...prev.days, newDay],
+    }))
+  }, [split.cycleDays])
+
+  // ─── Exercise picker ─────────────────────────────────────────────────────
+
+  const handleOpenPicker = useCallback((dayId: string, dayIndex: number) => {
+    setPickerState({ dayId, dayIndex })
+  }, [])
+
+  const pickerDay = pickerState
+    ? split.days.find(d => d.id === pickerState.dayId)
     : null
 
-  const builderSplitName = activeTabId === 'builder'
-    ? split.name
-    : (builderDraftRef.current?.name ?? '')
+  const alreadyAdded = pickerDay
+    ? new Set(pickerDay.exercises.map(e => e.exerciseId))
+    : new Set<string>()
+
+  // ─── Render ──────────────────────────────────────────────────────────────
 
   if (!mounted) {
     return (
@@ -271,18 +225,17 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-screen bg-black overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-950/60 blur-[140px]" />
-          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-amber-950/40 blur-[120px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-indigo-950/30 blur-[100px]" />
-        </div>
+    <>
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-950/60 blur-[140px]" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-amber-950/35 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-indigo-950/25 blur-[100px]" />
+      </div>
 
+      <div className="flex flex-col h-screen bg-black overflow-hidden">
         <TopBar
           split={split}
-          isNamed={activeTabId !== 'builder'}
-          onUpdateName={handleUpdateName}
           onUpdateCycleDays={handleUpdateCycleDays}
           onUpdateStartDay={handleUpdateStartDay}
           onSave={handleSave}
@@ -290,27 +243,77 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
         />
 
         <div className="flex flex-1 min-h-0">
-          {/* Left sidebar */}
+          {/* Sidebar */}
           <div className={cn(
             'flex-shrink-0 overflow-hidden transition-[width] duration-200',
-            sidebarOpen ? 'w-52 border-r border-white/10' : 'w-0'
+            sidebarOpen ? 'w-52 border-r border-white/[0.07]' : 'w-0'
           )}>
             <SplitSidebar
               savedSplits={savedSplits}
-              activeTabId={activeTabId}
-              builderSplitName={builderSplitName}
-              onSelectTab={handleSelectTab}
-              onDeleteSplit={handleDeleteSaved}
-              onDuplicateSplit={handleDuplicateSaved}
-              onUpdateSplitIcon={handleUpdateSplitIcon}
+              activeId={activeId}
+              onSelectSplit={handleSelectSplit}
+              onNewSplit={handleNewSplit}
+              onDeleteSplit={handleDeleteSplit}
+              onDuplicateSplit={handleDuplicateSplit}
             />
           </div>
 
-          {/* Builder content */}
+          {/* Main content */}
           <div className="flex flex-col flex-1 min-w-0">
+            {/* Split name + tabs header */}
+            <div className="flex-shrink-0 px-6 pt-5 pb-0 border-b border-white/[0.05]">
+              {/* Editable split name */}
+              <div className="flex items-center gap-2 mb-3">
+                {isEditingName ? (
+                  <>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={nameDraft}
+                      onChange={e => setNameDraft(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') commitName()
+                        if (e.key === 'Escape') cancelEditName()
+                      }}
+                      className="text-2xl font-bold text-white/90 bg-white/[0.05] border border-violet-500/35 rounded-xl px-3 py-1 outline-none focus:border-violet-400/60 min-w-0 max-w-sm"
+                    />
+                    <button onClick={commitName} className="p-1.5 text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-950/30 rounded-lg transition-colors">
+                      <Check size={15} />
+                    </button>
+                    <button onClick={cancelEditName} className="p-1.5 text-white/30 hover:text-white/60 hover:bg-white/[0.05] rounded-lg transition-colors">
+                      <X size={15} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-2xl font-bold text-white/85 tracking-tight">{split.name}</h1>
+                    <button
+                      onClick={startEditingName}
+                      className="p-1.5 text-white/20 hover:text-white/60 hover:bg-white/[0.05] rounded-lg transition-colors"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-1">
+                <TabButton active label="Split Planner" />
+              </div>
+            </div>
+
+            {/* Builder area */}
             <div className="flex-1 overflow-auto p-4 min-h-0">
+              {/* Subtitle */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-white/60">Arrange your workouts</p>
+                <p className="text-xs text-white/25">Add exercises to each day — the type is detected automatically</p>
+              </div>
+
+              {/* Day columns */}
               <div
-                className="grid gap-1 h-full"
+                className="grid gap-2"
                 style={{
                   gridTemplateColumns: split.cycleDays <= 7
                     ? `repeat(${split.cycleDays}, 1fr)`
@@ -324,14 +327,37 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
                     dayIndex={index}
                     startDay={split.startDay}
                     exercises={exercises}
+                    dayType={dayTypeLabels[index]?.type ?? null}
+                    typeRank={dayTypeLabels[index]?.rank ?? 0}
                     onUpdateDay={handleUpdateDay}
-                    onUpdateMuscleGroupDay={handleUpdateMuscleGroupDay}
-                    onRemoveMuscleGroup={handleRemoveMuscleGroup}
-                    onOpenExerciseModal={handleOpenExerciseModal}
-                    onAddMuscleGroup={handleAddMuscleGroup}
+                    onReorderExercises={handleReorderExercises}
+                    onRemoveExercise={handleRemoveExercise}
+                    onOpenPicker={handleOpenPicker}
                   />
                 ))}
               </div>
+
+              {/* Add rest / custom day buttons */}
+              {split.cycleDays < 21 && (
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleAddRestDay}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.07] text-sm text-white/40 hover:text-white/70 hover:border-white/[0.14] transition-all"
+                    style={{ background: 'rgba(255,255,255,0.02)' }}
+                  >
+                    <Moon size={14} className="flex-shrink-0" />
+                    Add Rest Day
+                  </button>
+                  <button
+                    onClick={handleAddWorkoutDay}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.07] text-sm text-white/40 hover:text-white/70 hover:border-white/[0.14] transition-all"
+                    style={{ background: 'rgba(255,255,255,0.02)' }}
+                  >
+                    <Plus size={14} className="flex-shrink-0" />
+                    Add Custom Day
+                  </button>
+                </div>
+              )}
             </div>
 
             <AnalyticsPanel split={split} exercises={exercises} />
@@ -339,38 +365,37 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
         </div>
       </div>
 
-      {exerciseModal && exerciseModalMG && (
-        <ExerciseModal
+      {/* Exercise picker modal */}
+      {pickerState && (
+        <ExercisePickerModal
           isOpen
-          onClose={() => setExerciseModal(null)}
-          muscleGroupDay={exerciseModalMG}
+          onClose={() => setPickerState(null)}
+          dayId={pickerState.dayId}
+          dayIndex={pickerState.dayIndex}
+          startDay={split.startDay}
           exercises={exercises}
-          dayId={exerciseModal.dayId}
-          onUpdateMuscleGroupDay={handleUpdateMuscleGroupDay}
-          onRemoveMuscleGroup={handleRemoveMuscleGroup}
+          alreadyAdded={alreadyAdded}
+          onAddExercise={handleAddExercise}
         />
       )}
+    </>
+  )
+}
 
-      <DragOverlay>
-        {activeDragMuscle && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/10 shadow-2xl text-sm font-medium cursor-grabbing select-none text-white/90"
-            style={{
-              background: 'rgba(0,0,0,0.80)',
-              backdropFilter: 'blur(24px)',
-              boxShadow: `0 0 24px ${MUSCLE_COLORS[activeDragMuscle] ?? '#7C3AED'}33`,
-            }}
-          >
-            {activeDragType === 'muscleGroupFromDay' && (
-              <GripVertical size={13} className="text-white/30 flex-shrink-0" />
-            )}
-            <span
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: MUSCLE_COLORS[activeDragMuscle] ?? '#7C3AED' }}
-            />
-            {activeDragMuscle}
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+function TabButton({ label, active }: { label: string; active?: boolean }) {
+  return (
+    <button
+      className={cn(
+        'px-4 py-2 text-sm font-medium transition-colors rounded-t-lg relative',
+        active
+          ? 'text-white/85'
+          : 'text-white/30 hover:text-white/55'
+      )}
+    >
+      {label}
+      {active && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-400 rounded-t-full" />
+      )}
+    </button>
   )
 }
