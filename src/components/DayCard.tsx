@@ -205,12 +205,7 @@ export default function DayCard({
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: typeColor }}
               />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white/80 leading-none">{dayType}</p>
-                {typeRank > 0 && (
-                  <p className="text-[10px] text-white/35 mt-0.5">{rankLabel(typeRank)}</p>
-                )}
-              </div>
+              <p className="text-sm font-semibold text-white/80 leading-none">{dayType}</p>
             </div>
           ) : null}
         </div>
