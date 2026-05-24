@@ -363,12 +363,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
 
             {/* Builder area */}
             <div className="flex-1 overflow-auto p-4 min-h-0">
-              {/* Subtitle */}
-              <div className="mb-4">
-                <p className="text-sm font-medium text-white/60">Arrange your workouts</p>
-                <p className="text-xs text-white/25">Add exercises to each day — the type is detected automatically</p>
-              </div>
-
               {/* Day columns */}
               <div
                 className="grid gap-2"
