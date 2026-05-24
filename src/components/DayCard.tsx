@@ -161,7 +161,7 @@ export default function DayCard({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-xl min-w-0 overflow-hidden transition-all',
+        'group flex flex-col rounded-xl min-w-0 overflow-hidden transition-all',
         day.isRest && 'opacity-60'
       )}
       style={{
@@ -225,7 +225,7 @@ export default function DayCard({
 
       {/* Exercise list (workout days) */}
       {!day.isRest && (
-        <div className="flex-1 px-2 pb-2 flex flex-col min-h-[60px]">
+        <div className="px-2 pb-2 flex flex-col">
           {day.exercises.length > 0 && (
             <DndContext
               sensors={sensors}
@@ -250,10 +250,10 @@ export default function DayCard({
             </DndContext>
           )}
 
-          {/* Add workout button */}
+          {/* Add workout button — only visible on card hover */}
           <button
             onClick={() => onOpenPicker(day.id, dayIndex)}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/[0.05] transition-all w-full mt-auto"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/[0.05] transition-all w-full opacity-0 group-hover:opacity-100"
           >
             <Plus size={12} className="flex-shrink-0" />
             <span className="text-xs">Add Workout</span>
