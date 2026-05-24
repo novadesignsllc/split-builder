@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -15,10 +14,9 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, GripVertical, MoreHorizontal, X, Moon } from 'lucide-react'
+import { Plus, GripVertical, MoreHorizontal, X, Moon, Trash2 } from 'lucide-react'
 import { DayConfig, Exercise, ExerciseEntry, DayType } from '@/lib/types'
 import { DAY_TYPE_COLORS } from '@/lib/constants'
-import { detectDayType } from '@/lib/analytics'
 import { getDayNameFull } from '@/lib/days'
 import {
   DropdownMenu,
@@ -63,42 +61,50 @@ function SortableExerciseRow({
   }
 
   const exercise = exercises.find(e => e.id === entry.exerciseId)
-  const workingSets = entry.sets.filter(s => s.type !== 'W').length || entry.sets.length
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-1.5 group px-1 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
+      style={{ ...style, background: 'rgba(255,255,255,0.03)' }}
+      className="flex items-center gap-1.5 group px-2 py-2 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors"
     >
       {/* Drag handle */}
       <button
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 p-0.5 text-white/10 group-hover:text-white/30 cursor-grab active:cursor-grabbing transition-colors"
+        className="flex-shrink-0 p-0.5 text-white/15 group-hover:text-white/40 cursor-grab active:cursor-grabbing transition-colors"
         aria-label="Drag to reorder"
       >
         <GripVertical size={13} />
       </button>
 
-      {/* Name */}
-      <span className="flex-1 min-w-0 text-xs text-white/65 truncate leading-snug">
+      {/* Name — wraps naturally, no truncation */}
+      <span className="flex-1 text-xs text-white/75 leading-snug">
         {exercise?.name ?? '—'}
       </span>
 
-      {/* Sets count */}
-      <span className="text-[10px] text-white/20 flex-shrink-0 tabular-nums">
-        {workingSets}×
-      </span>
-
-      {/* Remove */}
-      <button
-        onClick={e => { e.stopPropagation(); onRemove() }}
-        className="flex-shrink-0 p-0.5 text-white/10 group-hover:text-white/40 hover:text-red-400/80 transition-colors opacity-0 group-hover:opacity-100"
-        aria-label="Remove exercise"
-      >
-        <X size={12} />
-      </button>
+      {/* ⋮ menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex-shrink-0 p-1 rounded-md text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-colors outline-none opacity-0 group-hover:opacity-100"
+          onClick={e => e.stopPropagation()}
+        >
+          <MoreHorizontal size={13} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          sideOffset={4}
+          className="w-32 border border-white/[0.08] p-1"
+          style={{ background: 'rgba(8,8,14,0.97)', backdropFilter: 'blur(32px)' }}
+        >
+          <DropdownMenuItem
+            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400/70 hover:text-red-400 hover:bg-red-950/30 cursor-pointer"
+            onClick={e => { e.stopPropagation(); onRemove() }}
+          >
+            <Trash2 size={11} /> Remove
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
