@@ -43,7 +43,7 @@ function migrateDay(day: DayConfig & { muscleGroups?: unknown }): DayConfig {
 }
 
 function migrateSplit(raw: Record<string, unknown>): Split {
-  const split = raw as Split & { days: Array<DayConfig & { muscleGroups?: unknown }> }
+  const split = raw as unknown as Split & { days: Array<DayConfig & { muscleGroups?: unknown }> }
   return {
     ...split,
     startDay: split.startDay ?? 1,
