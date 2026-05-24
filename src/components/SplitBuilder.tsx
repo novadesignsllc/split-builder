@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { Pencil, Check, X, Plus, Moon } from 'lucide-react'
+import { Pencil, Check, X } from 'lucide-react'
 import { Exercise, Split, DayConfig, ExerciseEntry } from '@/lib/types'
 import {
   createDefaultSplit,
@@ -180,26 +180,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     }))
   }, [])
 
-  const handleAddRestDay = useCallback(() => {
-    if (split.cycleDays >= 21) return
-    const newDay: DayConfig = { id: uuidv4(), label: '', isRest: true, exercises: [] }
-    setSplit(prev => ({
-      ...prev,
-      cycleDays: prev.cycleDays + 1,
-      days: [...prev.days, newDay],
-    }))
-  }, [split.cycleDays])
-
-  const handleAddWorkoutDay = useCallback(() => {
-    if (split.cycleDays >= 21) return
-    const newDay: DayConfig = { id: uuidv4(), label: '', isRest: false, exercises: [] }
-    setSplit(prev => ({
-      ...prev,
-      cycleDays: prev.cycleDays + 1,
-      days: [...prev.days, newDay],
-    }))
-  }, [split.cycleDays])
-
   // ─── Exercise picker ─────────────────────────────────────────────────────
 
   const handleOpenPicker = useCallback((dayId: string, dayIndex: number) => {
@@ -337,27 +317,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
                 ))}
               </div>
 
-              {/* Add rest / custom day buttons */}
-              {split.cycleDays < 21 && (
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleAddRestDay}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.07] text-sm text-white/40 hover:text-white/70 hover:border-white/[0.14] transition-all"
-                    style={{ background: 'rgba(255,255,255,0.02)' }}
-                  >
-                    <Moon size={14} className="flex-shrink-0" />
-                    Add Rest Day
-                  </button>
-                  <button
-                    onClick={handleAddWorkoutDay}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.07] text-sm text-white/40 hover:text-white/70 hover:border-white/[0.14] transition-all"
-                    style={{ background: 'rgba(255,255,255,0.02)' }}
-                  >
-                    <Plus size={14} className="flex-shrink-0" />
-                    Add Custom Day
-                  </button>
-                </div>
-              )}
             </div>
 
             <AnalyticsPanel split={split} exercises={exercises} />
