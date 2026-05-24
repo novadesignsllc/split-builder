@@ -166,7 +166,7 @@ export default function DayCard({
       )}
       style={{
         background: bgTint
-          ? `linear-gradient(160deg, ${typeColor}12 0%, rgba(255,255,255,0.015) 60%)`
+          ? `linear-gradient(160deg, ${typeColor}40 0%, ${typeColor}18 100%)`
           : 'rgba(255,255,255,0.025)',
         backdropFilter: 'blur(12px)',
       }}
