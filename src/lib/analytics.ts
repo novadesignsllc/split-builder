@@ -6,6 +6,10 @@ import {
   MUSCLE_TO_DB_MUSCLES,
   PUSH_DB_MUSCLES,
   PULL_DB_MUSCLES,
+  CHEST_DB_MUSCLES,
+  BACK_DB_MUSCLES,
+  SHOULDER_DB_MUSCLES,
+  ARM_DB_MUSCLES,
   LEG_DB_MUSCLES,
   CORE_DB_MUSCLES,
 } from './constants'
@@ -35,46 +39,39 @@ function getPrimaryMuscleGroup(exerciseId: string, exercises: Exercise[]): strin
 export function detectDayType(dayExercises: ExerciseEntry[], exerciseDb: Exercise[]): DayType {
   if (dayExercises.length === 0) return null
 
-  let push = 0, pull = 0, legs = 0, core = 0, other = 0
+  let chest = 0, back = 0, shoulders = 0, arms = 0, legs = 0, core = 0, other = 0
 
   for (const entry of dayExercises) {
     const ex = exerciseDb.find(e => e.id === entry.exerciseId)
     if (!ex) { other++; continue }
-
-    const primaryMuscle = ex.primaryMuscles[0] ?? ''
-
-    if (LEG_DB_MUSCLES.has(primaryMuscle)) {
-      legs++
-    } else if (PUSH_DB_MUSCLES.has(primaryMuscle)) {
-      push++
-    } else if (PULL_DB_MUSCLES.has(primaryMuscle)) {
-      pull++
-    } else if (CORE_DB_MUSCLES.has(primaryMuscle)) {
-      core++
-    } else {
-      // fall back to force field
-      if (ex.force === 'push') push++
-      else if (ex.force === 'pull') pull++
-      else other++
-    }
+    const m = ex.primaryMuscles[0] ?? ''
+    if (CHEST_DB_MUSCLES.has(m))         chest++
+    else if (BACK_DB_MUSCLES.has(m))     back++
+    else if (SHOULDER_DB_MUSCLES.has(m)) shoulders++
+    else if (ARM_DB_MUSCLES.has(m))      arms++
+    else if (LEG_DB_MUSCLES.has(m))      legs++
+    else if (CORE_DB_MUSCLES.has(m))     core++
+    else other++
   }
 
-  const total = push + pull + legs + core + other
+  const total = chest + back + shoulders + arms + legs + core + other
   if (total === 0) return null
 
-  const legsRatio = legs / total
-  const pushRatio = push / total
-  const pullRatio = pull / total
-  const upperRatio = (push + pull) / total
+  const scores: [DayType, number][] = [
+    ['Chest',     chest],
+    ['Back',      back],
+    ['Shoulders', shoulders],
+    ['Arms',      arms],
+    ['Legs',      legs],
+    ['Core',      core],
+  ]
 
-  if (legsRatio >= 0.5) return 'Legs'
-  if (pushRatio >= 0.6) return 'Push'
-  if (pullRatio >= 0.6) return 'Pull'
-  if (upperRatio >= 0.7) return 'Upper'
-  if (legsRatio >= 0.3 && upperRatio >= 0.3) return 'Full Body'
-  if (core / total >= 0.6) return 'Core'
-  if (pushRatio > pullRatio) return 'Push'
-  if (pullRatio > pushRatio) return 'Pull'
+  const [topType, topCount] = scores.reduce((a, b) => b[1] > a[1] ? b : a)
+
+  // Dominant if it's ≥40% of categorised exercises
+  const categorised = total - other
+  if (categorised > 0 && topCount / categorised >= 0.4) return topType
+
   return 'Full Body'
 }
 

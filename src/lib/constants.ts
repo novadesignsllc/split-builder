@@ -42,11 +42,17 @@ export const VOLUME_TARGETS: Record<string, { mev: number; mav: number }> = {
   'Neck': { mev: 0, mav: 10 },
 }
 
-// Day type detection — which db muscle strings belong to push / pull / legs
-export const PUSH_DB_MUSCLES = new Set(['chest', 'shoulders', 'triceps'])
-export const PULL_DB_MUSCLES = new Set(['lats', 'middle back', 'upper back', 'biceps', 'traps'])
+// Day type detection buckets (db muscle string → category)
+export const CHEST_DB_MUSCLES = new Set(['chest'])
+export const BACK_DB_MUSCLES = new Set(['lats', 'middle back', 'upper back', 'traps'])
+export const SHOULDER_DB_MUSCLES = new Set(['shoulders'])
+export const ARM_DB_MUSCLES = new Set(['biceps', 'triceps', 'forearms'])
 export const LEG_DB_MUSCLES = new Set(['quadriceps', 'hamstrings', 'glutes', 'calves', 'adductors', 'abductors'])
 export const CORE_DB_MUSCLES = new Set(['abdominals', 'lower back'])
+
+// Keep these for analytics.ts push/pull/legs ratio computation
+export const PUSH_DB_MUSCLES = new Set(['chest', 'shoulders', 'triceps'])
+export const PULL_DB_MUSCLES = new Set(['lats', 'middle back', 'upper back', 'biceps', 'traps'])
 
 export const LEG_MUSCLES = new Set(['Quads', 'Hamstrings', 'Glutes', 'Calves'])
 
@@ -84,12 +90,13 @@ export const MUSCLE_COLORS: Record<string, string> = {
   'Neck': '#64748b',
 }
 
+// Solid accent colour per day type (used for bg tint + label)
 export const DAY_TYPE_COLORS: Record<string, string> = {
-  'Push': '#f97316',
-  'Pull': '#3b82f6',
-  'Legs': '#10b981',
-  'Upper': '#8b5cf6',
-  'Lower': '#22d3ee',
-  'Full Body': '#14b8a6',
-  'Core': '#f59e0b',
+  'Chest':     '#f97316',   // orange
+  'Back':      '#8b5cf6',   // purple
+  'Shoulders': '#14b8a6',   // teal
+  'Arms':      '#3b82f6',   // blue
+  'Legs':      '#10b981',   // green
+  'Core':      '#f59e0b',   // amber
+  'Full Body': '#6366f1',   // indigo
 }

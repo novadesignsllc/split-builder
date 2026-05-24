@@ -153,13 +153,23 @@ export default function DayCard({
     onReorderExercises(day.id, arrayMove(day.exercises, oldIdx, newIdx))
   }
 
+  // Hex → subtle rgba background tint
+  const bgTint = typeColor !== '#6b7280'
+    ? `${typeColor}0f`   // ~6% opacity tint from the accent colour
+    : undefined
+
   return (
     <div
       className={cn(
         'flex flex-col rounded-xl min-w-0 overflow-hidden transition-all',
         day.isRest && 'opacity-60'
       )}
-      style={{ background: 'rgba(255,255,255,0.025)', backdropFilter: 'blur(12px)' }}
+      style={{
+        background: bgTint
+          ? `linear-gradient(160deg, ${typeColor}12 0%, rgba(255,255,255,0.015) 60%)`
+          : 'rgba(255,255,255,0.025)',
+        backdropFilter: 'blur(12px)',
+      }}
     >
       {/* Day name header */}
       <div className="px-3 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
@@ -200,13 +210,7 @@ export default function DayCard({
       {!day.isRest && (
         <div className="px-3 pb-2.5 flex-shrink-0">
           {dayType ? (
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: typeColor }}
-              />
-              <p className="text-sm font-semibold text-white/80 leading-none">{dayType}</p>
-            </div>
+            <p className="text-sm font-semibold text-white/80 leading-none">{dayType}</p>
           ) : null}
         </div>
       )}

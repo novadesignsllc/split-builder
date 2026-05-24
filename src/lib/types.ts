@@ -49,4 +49,4 @@ export interface ChartEntry {
   mav: number
 }
 
-export type DayType = 'Push' | 'Pull' | 'Legs' | 'Upper' | 'Lower' | 'Full Body' | 'Core' | null
+export type DayType = 'Chest' | 'Back' | 'Shoulders' | 'Arms' | 'Legs' | 'Core' | 'Full Body' | null
