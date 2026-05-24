@@ -156,16 +156,14 @@ export default function DayCard({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-xl border min-w-0 overflow-hidden transition-all',
-        day.isRest
-          ? 'border-white/[0.04] opacity-60'
-          : 'border-white/[0.07] hover:border-white/[0.10]'
+        'flex flex-col rounded-xl min-w-0 overflow-hidden transition-all',
+        day.isRest && 'opacity-60'
       )}
       style={{ background: 'rgba(255,255,255,0.025)', backdropFilter: 'blur(12px)' }}
     >
       {/* Day name header */}
       <div className="px-3 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
-        <span className="text-[10px] font-semibold text-white/40 tracking-[0.12em]">
+        <span className="text-[10px] font-semibold text-white/40 tracking-[0.12em] flex-1 text-center">
           {dayName}
         </span>
         <DropdownMenu>
@@ -214,12 +212,7 @@ export default function DayCard({
                 )}
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-white/10 flex-shrink-0" />
-              <p className="text-xs text-white/25 italic">No exercises</p>
-            </div>
-          )}
+          ) : null}
         </div>
       )}
 
