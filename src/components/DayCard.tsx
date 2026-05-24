@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, GripVertical, MoreHorizontal, X, Moon, Trash2 } from 'lucide-react'
+import { Plus, MoreHorizontal, X, Moon, Trash2, RefreshCw } from 'lucide-react'
 import { DayConfig, Exercise, ExerciseEntry, DayType } from '@/lib/types'
 import { DAY_TYPE_COLORS } from '@/lib/constants'
 import { getDayNameFull } from '@/lib/days'
@@ -20,12 +21,16 @@ export function SortableExerciseRow({
   dayId,
   exercises,
   onRemove,
+  onReplace,
 }: {
   entry: ExerciseEntry
   dayId: string
   exercises: Exercise[]
   onRemove: () => void
+  onReplace: () => void
 }) {
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null)
+
   const {
     attributes,
     listeners,
@@ -46,47 +51,59 @@ export function SortableExerciseRow({
 
   const exercise = exercises.find(e => e.id === entry.exerciseId)
 
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault()
+    setCtxMenu({ x: e.clientX, y: e.clientY })
+  }
+
   return (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, background: 'rgba(255,255,255,0.03)' }}
-      className="flex items-center gap-1.5 group/row px-2 py-2 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors"
-    >
-      <button
+    <>
+      <div
+        ref={setNodeRef}
+        style={{ ...style, background: 'rgba(255,255,255,0.03)' }}
+        className="flex items-center px-3 py-2 rounded-xl border border-white/[0.07] hover:border-white/[0.12] transition-colors cursor-grab active:cursor-grabbing select-none"
+        onContextMenu={handleContextMenu}
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 p-0.5 text-white/15 group-hover/row:text-white/40 cursor-grab active:cursor-grabbing transition-colors"
-        aria-label="Drag to reorder"
       >
-        <GripVertical size={13} />
-      </button>
+        <span className="flex-1 text-xs text-white/75 leading-snug">
+          {exercise?.name ?? '—'}
+        </span>
+      </div>
 
-      <span className="flex-1 text-xs text-white/75 leading-snug">
-        {exercise?.name ?? '—'}
-      </span>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex-shrink-0 p-1 rounded-md text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-colors outline-none opacity-0 group-hover/row:opacity-100"
-          onClick={e => e.stopPropagation()}
-        >
-          <MoreHorizontal size={13} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          sideOffset={4}
-          className="w-32 border border-white/[0.08] p-1"
-          style={{ background: 'rgba(8,8,14,0.97)', backdropFilter: 'blur(32px)' }}
-        >
-          <DropdownMenuItem
-            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400/70 hover:text-red-400 hover:bg-red-950/30 cursor-pointer"
-            onClick={e => { e.stopPropagation(); onRemove() }}
+      {/* Right-click context menu */}
+      {ctxMenu && (
+        <>
+          {/* Backdrop to close */}
+          <div
+            className="fixed inset-0 z-40"
+            onMouseDown={() => setCtxMenu(null)}
+          />
+          <div
+            className="fixed z-50 min-w-[120px] rounded-xl border border-white/[0.10] p-1 shadow-2xl"
+            style={{
+              top: ctxMenu.y,
+              left: ctxMenu.x,
+              background: 'rgba(8,8,14,0.97)',
+              backdropFilter: 'blur(32px)',
+            }}
           >
-            <Trash2 size={11} /> Remove
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+            <button
+              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors text-left"
+              onMouseDown={e => { e.stopPropagation(); setCtxMenu(null); onReplace() }}
+            >
+              <RefreshCw size={11} /> Replace
+            </button>
+            <button
+              className="flex items-center gap-2 w-full px-3 py-1.5 rounded-lg text-xs text-red-400/70 hover:text-red-400 hover:bg-red-950/30 transition-colors text-left"
+              onMouseDown={e => { e.stopPropagation(); setCtxMenu(null); onRemove() }}
+            >
+              <Trash2 size={11} /> Remove
+            </button>
+          </div>
+        </>
+      )}
+    </>
   )
 }
 
@@ -101,7 +118,7 @@ interface DayCardProps {
   typeRank: number
   onUpdateDay: (dayId: string, updates: Partial<DayConfig>) => void
   onRemoveExercise: (dayId: string, entryId: string) => void
-  onOpenPicker: (dayId: string, dayIndex: number) => void
+  onOpenPicker: (dayId: string, dayIndex: number, replaceEntryId?: string) => void
 }
 
 export default function DayCard({
@@ -114,6 +131,7 @@ export default function DayCard({
   onRemoveExercise,
   onOpenPicker,
 }: DayCardProps) {
+  const [replacingEntryId, setReplacingEntryId] = useState<string | null>(null)
   const dayName = getDayNameFull(startDay, dayIndex).toUpperCase()
   const typeColor = dayType ? (DAY_TYPE_COLORS[dayType] ?? '#7C3AED') : '#6b7280'
 
@@ -208,6 +226,7 @@ export default function DayCard({
                   dayId={day.id}
                   exercises={exercises}
                   onRemove={() => onRemoveExercise(day.id, entry.id)}
+                  onReplace={() => onOpenPicker(day.id, dayIndex, entry.id)}
                 />
               ))}
             </div>

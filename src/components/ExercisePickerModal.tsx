@@ -15,6 +15,7 @@ interface ExercisePickerModalProps {
   startDay: number
   exercises: Exercise[]
   alreadyAdded: Set<string>
+  replaceEntryId?: string
   onAddExercise: (dayId: string, entry: ExerciseEntry) => void
 }
 
@@ -26,6 +27,7 @@ export default function ExercisePickerModal({
   startDay,
   exercises,
   alreadyAdded,
+  replaceEntryId,
   onAddExercise,
 }: ExercisePickerModalProps) {
   const [search, setSearch] = useState('')
@@ -108,7 +110,7 @@ export default function ExercisePickerModal({
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.07] flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-white/30 uppercase tracking-widest">Add to</p>
+            <p className="text-xs text-white/30 uppercase tracking-widest">{replaceEntryId ? 'Replace in' : 'Add to'}</p>
             <p className="text-sm font-semibold text-white/80">{dayName}</p>
           </div>
           <button

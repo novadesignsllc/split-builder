@@ -28,7 +28,7 @@ import { computeDayTypeLabels } from '@/lib/analytics'
 import TopBar from './TopBar'
 import DayCard, { SortableExerciseRow } from './DayCard'
 import AnalyticsPanel from './AnalyticsPanel'
-import SplitSidebar from './SplitSidebar'
+import SplitTabBar from './SplitTabBar'
 import ExercisePickerModal from './ExercisePickerModal'
 import { cn } from '@/lib/utils'
 
@@ -40,11 +40,10 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
   const [split, setSplit] = useState<Split>(createDefaultSplit)
   const [savedSplits, setSavedSplits] = useState<Split[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)  // null = unsaved draft
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
-  const [pickerState, setPickerState] = useState<{ dayId: string; dayIndex: number } | null>(null)
+  const [pickerState, setPickerState] = useState<{ dayId: string; dayIndex: number; replaceEntryId?: string } | null>(null)
   const [activeDragEntry, setActiveDragEntry] = useState<{ entry: ExerciseEntry; dayId: string } | null>(null)
   const draftRef = useRef<Split | null>(null)
 
@@ -165,6 +164,14 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     setSplit(prev => ({ ...prev, startDay }))
   }, [])
 
+  const handleRenameSplit = useCallback((id: string, name: string) => {
+    const target = savedSplits.find(s => s.id === id)
+    if (!target) return
+    saveSplit({ ...target, name })
+    if (activeId === id) setSplit(prev => ({ ...prev, name }))
+    setSavedSplits(loadAllSplits())
+  }, [activeId, savedSplits])
+
   // ─── Day actions ─────────────────────────────────────────────────────────
 
   const handleUpdateDay = useCallback((dayId: string, updates: Partial<DayConfig>) => {
@@ -174,12 +181,17 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     }))
   }, [])
 
-  const handleAddExercise = useCallback((dayId: string, entry: ExerciseEntry) => {
+  const handleAddExercise = useCallback((dayId: string, entry: ExerciseEntry, replaceEntryId?: string) => {
     setSplit(prev => ({
       ...prev,
-      days: prev.days.map(d =>
-        d.id === dayId ? { ...d, exercises: [...d.exercises, entry] } : d
-      ),
+      days: prev.days.map(d => {
+        if (d.id !== dayId) return d
+        if (replaceEntryId) {
+          // Swap in place
+          return { ...d, exercises: d.exercises.map(e => e.id === replaceEntryId ? { ...entry, id: e.id } : e) }
+        }
+        return { ...d, exercises: [...d.exercises, entry] }
+      }),
     }))
   }, [])
 
@@ -261,8 +273,8 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
 
   // ─── Exercise picker ─────────────────────────────────────────────────────
 
-  const handleOpenPicker = useCallback((dayId: string, dayIndex: number) => {
-    setPickerState({ dayId, dayIndex })
+  const handleOpenPicker = useCallback((dayId: string, dayIndex: number, replaceEntryId?: string) => {
+    setPickerState({ dayId, dayIndex, replaceEntryId })
   }, [])
 
   const pickerDay = pickerState
@@ -307,31 +319,14 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           onUpdateCycleDays={handleUpdateCycleDays}
           onUpdateStartDay={handleUpdateStartDay}
           onSave={handleSave}
-          onToggleSidebar={() => setSidebarOpen(o => !o)}
         />
 
         <div className="flex flex-1 min-h-0">
-          {/* Sidebar */}
-          <div className={cn(
-            'flex-shrink-0 overflow-hidden transition-[width] duration-200',
-            sidebarOpen ? 'w-52 border-r border-white/[0.07]' : 'w-0'
-          )}>
-            <SplitSidebar
-              savedSplits={savedSplits}
-              activeId={activeId}
-              onSelectSplit={handleSelectSplit}
-              onNewSplit={handleNewSplit}
-              onDeleteSplit={handleDeleteSplit}
-              onDuplicateSplit={handleDuplicateSplit}
-            />
-          </div>
-
           {/* Main content */}
           <div className="flex flex-col flex-1 min-w-0">
-            {/* Split name + tabs header */}
-            <div className="flex-shrink-0 px-6 pt-5 pb-0 border-b border-white/[0.05]">
-              {/* Editable split name */}
-              <div className="flex items-center gap-2 mb-3">
+            {/* Split name header */}
+            <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-white/[0.05]">
+              <div className="flex items-center gap-2">
                 {isEditingName ? (
                   <>
                     <input
@@ -363,11 +358,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
                     </button>
                   </>
                 )}
-              </div>
-
-              {/* Tabs */}
-              <div className="flex gap-1">
-                <TabButton active label="Split Planner" />
               </div>
             </div>
 
@@ -407,6 +397,16 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
             </div>
 
             <AnalyticsPanel split={split} exercises={exercises} />
+            <SplitTabBar
+              savedSplits={savedSplits}
+              activeId={activeId}
+              draftName={split.name}
+              onSelectSplit={handleSelectSplit}
+              onNewSplit={handleNewSplit}
+              onDeleteSplit={handleDeleteSplit}
+              onDuplicateSplit={handleDuplicateSplit}
+              onRenameSplit={handleRenameSplit}
+            />
           </div>
         </div>
       </div>
@@ -434,7 +434,11 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           startDay={split.startDay}
           exercises={exercises}
           alreadyAdded={alreadyAdded}
-          onAddExercise={handleAddExercise}
+          replaceEntryId={pickerState.replaceEntryId}
+          onAddExercise={(dayId, entry) => {
+            handleAddExercise(dayId, entry, pickerState.replaceEntryId)
+            if (pickerState.replaceEntryId) setPickerState(null)
+          }}
         />
       )}
     </DndContext>

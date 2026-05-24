@@ -1,4 +1,4 @@
-import { Minus, Plus, Settings, Save, PanelLeft } from 'lucide-react'
+import { Minus, Plus, Settings, Save } from 'lucide-react'
 import { Split } from '@/lib/types'
 import {
   DropdownMenu,
@@ -12,7 +12,6 @@ interface TopBarProps {
   onUpdateCycleDays: (days: number) => void
   onUpdateStartDay: (day: number) => void
   onSave: () => void
-  onToggleSidebar: () => void
 }
 
 export default function TopBar({
@@ -20,7 +19,6 @@ export default function TopBar({
   onUpdateCycleDays,
   onUpdateStartDay,
   onSave,
-  onToggleSidebar,
 }: TopBarProps) {
   function decrement() {
     if (split.cycleDays > 3) onUpdateCycleDays(split.cycleDays - 1)
@@ -34,14 +32,6 @@ export default function TopBar({
       className="h-14 flex items-center gap-3 px-4 flex-shrink-0 border-b border-white/[0.05]"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(32px)' }}
     >
-      {/* Sidebar toggle */}
-      <button
-        onClick={onToggleSidebar}
-        className="flex-shrink-0 text-white/30 hover:text-white/70 transition-colors p-1.5 -ml-1 rounded-lg hover:bg-white/[0.04]"
-      >
-        <PanelLeft size={15} />
-      </button>
-
       {/* Logo */}
       <span
         className="text-white leading-none tracking-tight flex-shrink-0"
