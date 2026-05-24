@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
 import { v4 as uuidv4 } from 'uuid'
+import { GripVertical } from 'lucide-react'
 import { Pencil, Check, X } from 'lucide-react'
 import { Exercise, Split, DayConfig, ExerciseEntry } from '@/lib/types'
 import {
@@ -13,7 +26,7 @@ import {
 } from '@/lib/storage'
 import { computeDayTypeLabels } from '@/lib/analytics'
 import TopBar from './TopBar'
-import DayCard from './DayCard'
+import DayCard, { SortableExerciseRow } from './DayCard'
 import AnalyticsPanel from './AnalyticsPanel'
 import SplitSidebar from './SplitSidebar'
 import ExercisePickerModal from './ExercisePickerModal'
@@ -32,7 +45,13 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
   const [pickerState, setPickerState] = useState<{ dayId: string; dayIndex: number } | null>(null)
+  const [activeDragEntry, setActiveDragEntry] = useState<{ entry: ExerciseEntry; dayId: string } | null>(null)
   const draftRef = useRef<Split | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  )
 
   // ─── Boot ───────────────────────────────────────────────────────────────
 
@@ -173,11 +192,71 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     }))
   }, [])
 
-  const handleReorderExercises = useCallback((dayId: string, reordered: ExerciseEntry[]) => {
-    setSplit(prev => ({
-      ...prev,
-      days: prev.days.map(d => d.id === dayId ? { ...d, exercises: reordered } : d),
-    }))
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const data = event.active.data.current
+    if (data?.type !== 'exercise') return
+    const sourceDayId = data.dayId as string
+    const entryId = data.entryId as string
+    const sourceDay = split.days.find(d => d.id === sourceDayId)
+    const entry = sourceDay?.exercises.find(e => e.id === entryId)
+    if (entry) setActiveDragEntry({ entry, dayId: sourceDayId })
+  }, [split.days])
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    setActiveDragEntry(null)
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+    const sourceDayId = active.data.current?.dayId as string | undefined
+    const overData = over.data.current as { type?: string; dayId?: string } | undefined
+    const targetDayId = overData?.dayId
+
+    if (!sourceDayId || !targetDayId) return
+
+    setSplit(prev => {
+      const sourceDay = prev.days.find(d => d.id === sourceDayId)
+      if (!sourceDay) return prev
+
+      if (sourceDayId === targetDayId) {
+        // ── Reorder within same day ──
+        const oldIdx = sourceDay.exercises.findIndex(e => e.id === activeId)
+        const newIdx = sourceDay.exercises.findIndex(e => e.id === overId)
+        if (oldIdx === -1 || newIdx === -1) return prev
+        return {
+          ...prev,
+          days: prev.days.map(d =>
+            d.id === sourceDayId
+              ? { ...d, exercises: arrayMove(d.exercises, oldIdx, newIdx) }
+              : d
+          ),
+        }
+      } else {
+        // ── Move to different day ──
+        const movingEntry = sourceDay.exercises.find(e => e.id === activeId)
+        if (!movingEntry) return prev
+        return {
+          ...prev,
+          days: prev.days.map(d => {
+            if (d.id === sourceDayId) {
+              return { ...d, exercises: d.exercises.filter(e => e.id !== activeId) }
+            }
+            if (d.id === targetDayId) {
+              const insertIdx = d.exercises.findIndex(e => e.id === overId)
+              const newExs = [...d.exercises]
+              if (insertIdx === -1) {
+                newExs.push(movingEntry)
+              } else {
+                newExs.splice(insertIdx, 0, movingEntry)
+              }
+              return { ...d, exercises: newExs }
+            }
+            return d
+          }),
+        }
+      }
+    })
   }, [])
 
   // ─── Exercise picker ─────────────────────────────────────────────────────
@@ -204,8 +283,17 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
     )
   }
 
+  const overlayExercise = activeDragEntry
+    ? exercises.find(e => e.id === activeDragEntry.entry.exerciseId)
+    : null
+
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full bg-violet-950/60 blur-[140px]" />
@@ -310,7 +398,6 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
                     dayType={dayTypeLabels[index]?.type ?? null}
                     typeRank={dayTypeLabels[index]?.rank ?? 0}
                     onUpdateDay={handleUpdateDay}
-                    onReorderExercises={handleReorderExercises}
                     onRemoveExercise={handleRemoveExercise}
                     onOpenPicker={handleOpenPicker}
                   />
@@ -323,6 +410,19 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           </div>
         </div>
       </div>
+
+      {/* Drag overlay */}
+      <DragOverlay>
+        {overlayExercise && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/[0.15] shadow-2xl text-xs text-white/80 cursor-grabbing select-none"
+            style={{ background: 'rgba(15,15,25,0.95)', backdropFilter: 'blur(24px)', maxWidth: 240 }}
+          >
+            <GripVertical size={13} className="text-white/30 flex-shrink-0" />
+            <span className="leading-snug">{overlayExercise.name}</span>
+          </div>
+        )}
+      </DragOverlay>
 
       {/* Exercise picker modal */}
       {pickerState && (
@@ -337,7 +437,7 @@ export function SplitBuilder({ exercises }: SplitBuilderProps) {
           onAddExercise={handleAddExercise}
         />
       )}
-    </>
+    </DndContext>
   )
 }
 
